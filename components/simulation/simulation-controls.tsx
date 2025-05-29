@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Play, Pause, Square, SkipForward, RotateCcw, Plus, Truck, Fuel, Home, MapPin } from "lucide-react"
+import { Play, Pause, Square, SkipForward, RotateCcw, Plus, Truck, Fuel, Home, MapPin, LineChart, SquareIcon, SquareSquareIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -118,42 +118,29 @@ export function SimulationControls() {
           </TabsList>
 
           <TabsContent value="leyenda" className="p-4 space-y-6">
-            <div>
-              <h4 className="font-semibold mb-3 text-base">Rutas</h4>
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                  <span className="text-sm">Pedidos</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-1 bg-black"></div>
-                  <span className="text-sm">Bloqueos</span>
-                </div>
-              </div>
-            </div>
 
             <div>
               <h4 className="font-semibold mb-3 text-base">Vehículos</h4>
               <div className="grid grid-cols-2 gap-3">
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
                   <Truck className="text-green-600 mx-auto mb-1" size={28} />
-                  <div className="text-sm font-medium">Vehículo: T1</div>
-                  <div className="text-xs text-gray-600">Capacidad: 5</div>
+                  <div className="text-sm font-medium">Vehículo: TA</div>
+                  <div className="text-xs text-gray-600">Capacidad: 25</div>
                 </div>
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
                   <Truck className="text-yellow-600 mx-auto mb-1" size={28} />
-                  <div className="text-sm font-medium">Vehículo: T2</div>
-                  <div className="text-xs text-gray-600">Capacidad: 10</div>
-                </div>
-                <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <Truck className="text-blue-600 mx-auto mb-1" size={28} />
-                  <div className="text-sm font-medium">Vehículo: T3</div>
+                  <div className="text-sm font-medium">Vehículo: TB</div>
                   <div className="text-xs text-gray-600">Capacidad: 15</div>
                 </div>
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
+                  <Truck className="text-blue-600 mx-auto mb-1" size={28} />
+                  <div className="text-sm font-medium">Vehículo: TC</div>
+                  <div className="text-xs text-gray-600">Capacidad: 10</div>
+                </div>
+                <div className="text-center p-3 bg-gray-50 rounded-lg">
                   <Truck className="text-purple-600 mx-auto mb-1" size={28} />
-                  <div className="text-sm font-medium">Vehículo: T4</div>
-                  <div className="text-xs text-gray-600">Capacidad: 25</div>
+                  <div className="text-sm font-medium">Vehículo: TD</div>
+                  <div className="text-xs text-gray-600">Capacidad: 5</div>
                 </div>
               </div>
             </div>
@@ -172,6 +159,10 @@ export function SimulationControls() {
                 <div className="text-center">
                   <MapPin className="text-red-600 mx-auto mb-1" size={28} />
                   <div className="text-sm">Puntos de Entrega</div>
+                </div>
+                <div className="text-center">
+                  <SquareIcon className="text-red-600 mx-auto mb-1" size={28} />
+                  <div className="text-sm">Bloqueos</div>
                 </div>
               </div>
             </div>

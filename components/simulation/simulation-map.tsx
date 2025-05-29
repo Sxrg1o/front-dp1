@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { ZoomIn, ZoomOut, Truck, Fuel, Home, MapPin, Slash } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -8,8 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { useWebSocket } from "@/hooks/use-websocket"
 
-const GRID_SIZE = 15 
+const BASE_GRID_SIZE = 15 
 const GRID_COLS = 70 
 const GRID_ROWS = 50 
 
@@ -71,6 +72,8 @@ const mockBlockages = [
 ]
 
 export function SimulationMap() {
+  const { vehicles, tanks, isConnected } = useWebSocket()
+  
   const [zoomLevel, setZoomLevel] = useState(100)
   const [showTruckModal, setShowTruckModal] = useState(false)
   const [showTankStatus, setShowTankStatus] = useState(false)
@@ -79,16 +82,102 @@ export function SimulationMap() {
   const [showBreakdownModal, setShowBreakdownModal] = useState(false)
   const [selectedBreakdown, setSelectedBreakdown] = useState("")
   
+  const displayVehicles = vehicles.map(vehicle => ({
+    id: vehicle.codigo,
+    x: vehicle.x,
+    y: vehicle.y,
+    pendingOrders: `${vehicle.pendingOrders}/5`,
+    fuelLevel: vehicle.fuelLevel > 75 ? 'Alto' : vehicle.fuelLevel > 25 ? 'Medio' : 'Bajo',
+    status: vehicle.estado,
+    type: vehicle.codigo.startsWith('T1') ? 'T1' : vehicle.codigo.startsWith('T2') ? 'T2' : 'T3',
+    color: vehicle.estado === 'Operativo' ? 'green' : 
+           vehicle.estado === 'En ruta' ? 'blue' : 
+           vehicle.estado === 'Cargando' ? 'yellow' : 'red'
+  }))
+  
+  const displayGasStations = tanks.map(tank => ({
+    id: tank.id,
+    x: Math.floor(Math.random() * 30) + 5, 
+    y: Math.floor(Math.random() * 20) + 5,
+    name: tank.name,
+    glpLevel: tank.glpLevel
+  }))
+  
+  const currentVehicles = isConnected && vehicles.length > 0 ? displayVehicles : mockTrucks
+  const currentGasStations = isConnected && tanks.length > 0 ? displayGasStations : mockGasStations
+  
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const mapContainerRef = useRef<HTMLDivElement>(null)
+
+  const GRID_SIZE = Math.round(BASE_GRID_SIZE * (zoomLevel / 100))
+  const mapWidth = GRID_COLS * GRID_SIZE
+  const mapHeight = GRID_ROWS * GRID_SIZE
 
   const breakdownTypes = {
     t1: "Se baja la llanta y se puede reparar en el mismo lugar por el conductor. Este incidente inmoviliza la unidad en el lugar por 2 horas.",
     t2: "Se ahoga (obstruye) el motor. Este incidente inmoviliza la unidad en el lugar por 2 horas. Este incidente deja inoperativo a la unidad por un turno completo en el taller.",
     t3: "Este incidente inmoviliza la unidad en el lugar por 4 horas. Este incidente deja inoperativo a la unidad por un día completo en el taller."
   }
+
+  const throttleRef = useRef<number | null>(null)
+  const wheelThrottleRef = useRef<number | null>(null)
+  const wheelDebounceRef = useRef<number | null>(null)
+
+  const constrainPanOffset = useCallback((offset: { x: number, y: number }) => {
+    if (!mapContainerRef.current) return offset
+    
+    const containerRect = mapContainerRef.current.getBoundingClientRect()
+    let newOffsetX = offset.x
+    let newOffsetY = offset.y
+  
+    if (mapWidth > containerRect.width) {
+      const maxOffsetX = (mapWidth - containerRect.width) / 2
+      newOffsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, offset.x))
+    } else {
+      newOffsetX = (containerRect.width - mapWidth) / 2
+    }
+    
+    if (mapHeight > containerRect.height) {
+      const maxOffsetY = (mapHeight - containerRect.height) / 2
+      newOffsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, offset.y))
+    } else {
+      newOffsetY = (containerRect.height - mapHeight) / 2
+    }
+    
+    return { x: newOffsetX, y: newOffsetY }
+  }, [mapWidth, mapHeight])
+
+  useEffect(() => {
+    return () => {
+      if (throttleRef.current) {
+        cancelAnimationFrame(throttleRef.current)
+      }
+      if (wheelThrottleRef.current) {
+        cancelAnimationFrame(wheelThrottleRef.current)
+      }
+      if (wheelDebounceRef.current) {
+        clearTimeout(wheelDebounceRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const correctedOffset = constrainPanOffset(panOffset)
+    if (correctedOffset.x !== panOffset.x || correctedOffset.y !== panOffset.y) {
+      setPanOffset(correctedOffset)
+    }
+  }, [zoomLevel, constrainPanOffset, panOffset])
+
+  useEffect(() => {
+    const handleResize = () => {
+      setPanOffset(prev => constrainPanOffset(prev))
+    }
+    
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [constrainPanOffset])
 
   const handleZoomIn = () => {
     setZoomLevel((prev) => Math.min(prev + 25, 300))
@@ -102,8 +191,6 @@ export function SimulationMap() {
     setZoomLevel(100)
     setPanOffset({ x: 0, y: 0 })
   }
-
-  const throttleRef = useRef<number | null>(null)
   
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button === 0) { 
@@ -119,26 +206,19 @@ export function SimulationMap() {
       if (throttleRef.current) return
       
       throttleRef.current = requestAnimationFrame(() => {
-        const containerRect = mapContainerRef.current!.getBoundingClientRect()
-        const mapWidth = GRID_COLS * GRID_SIZE * (zoomLevel / 100)
-        const mapHeight = GRID_ROWS * GRID_SIZE * (zoomLevel / 100)
+        const newOffset = {
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y
+        }
         
-        let newOffsetX = e.clientX - dragStart.x
-        let newOffsetY = e.clientY - dragStart.y
-        
-        const maxOffsetX = Math.max(0, (mapWidth - containerRect.width) / 2)
-        const maxOffsetY = Math.max(0, (mapHeight - containerRect.height) / 2)
-        
-        newOffsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, newOffsetX))
-        newOffsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, newOffsetY))
-        
-        setPanOffset({ x: newOffsetX, y: newOffsetY })
+        const constrainedOffset = constrainPanOffset(newOffset)
+        setPanOffset(constrainedOffset)
         throttleRef.current = null
       })
       e.preventDefault()
       e.stopPropagation()
     }
-  }, [isDragging, dragStart, zoomLevel])
+  }, [isDragging, dragStart, constrainPanOffset])
 
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
     setIsDragging(false)
@@ -149,8 +229,6 @@ export function SimulationMap() {
     e.preventDefault()
   }, [])
 
-  const wheelThrottleRef = useRef<number | null>(null)
-  
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -165,7 +243,15 @@ export function SimulationMap() {
       })
       wheelThrottleRef.current = null
     })
-  }, [])
+
+    if (wheelDebounceRef.current) {
+      clearTimeout(wheelDebounceRef.current)
+    }
+    
+    wheelDebounceRef.current = setTimeout(() => {
+      setPanOffset(prev => constrainPanOffset(prev))
+    }, 150) as any
+  }, [constrainPanOffset])
 
   const handleTruckClick = (truck: any) => {
     setSelectedTruck(truck)
@@ -212,13 +298,32 @@ export function SimulationMap() {
 
   const getRouteColorClass = (color: string) => {
     const colorMap = {
-      green: "bg-green-500/40",   
-      yellow: "bg-yellow-500/40",
-      blue: "bg-blue-500/40", 
-      purple: "bg-purple-500/40"
+      green: "bg-green-500/30",   
+      yellow: "bg-yellow-500/30",
+      blue: "bg-blue-500/30", 
+      purple: "bg-purple-500/30"
     }
     return colorMap[color as keyof typeof colorMap] || "bg-blue-500/40"
   }
+
+  useEffect(() => {
+    if (mapContainerRef.current) {
+      const initialOffset = constrainPanOffset({ x: 0, y: 0 })
+      setPanOffset(initialOffset)
+    }
+  }, [constrainPanOffset])
+  useEffect(() => {
+    return () => {
+      setZoomLevel(100)
+      setPanOffset({ x: 0, y: 0 })
+      setShowTruckModal(false)
+      setShowTankStatus(false)
+      setShowBreakdownModal(false)
+      setSelectedTruck(null)
+      setSelectedStation(null)
+      setSelectedBreakdown("")
+    }
+  }, [])
 
   return (
     <>
@@ -237,13 +342,20 @@ export function SimulationMap() {
               <Button variant="outline" size="sm" onClick={handleResetZoom}>
                 Reset
               </Button>
+              {/* WebSocket Connection Status */}
+              <div className="flex items-center gap-2 ml-4">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                <span className="text-sm text-gray-600">
+                  {isConnected ? 'Conectado' : 'Desconectado'}
+                </span>
+              </div>
             </div>
             <div className="text-sm text-gray-600">
               Arrastrar para mover • Rueda para zoom
             </div>
           </div>
 
-          {/* Map Container with optimized event handling */}
+          {/* Map Container with crisp zoom rendering */}
           <div 
             ref={mapContainerRef}
             className="relative overflow-hidden border border-gray-300 rounded-lg cursor-grab active:cursor-grabbing select-none touch-none"
@@ -258,18 +370,18 @@ export function SimulationMap() {
             <div
               className="relative will-change-transform"
               style={{
-                transform: `scale(${zoomLevel / 100}) translate(${panOffset.x / (zoomLevel / 100)}px, ${panOffset.y / (zoomLevel / 100)}px)`,
-                transformOrigin: "center center", 
-                width: `${GRID_COLS * GRID_SIZE}px`,
-                height: `${GRID_ROWS * GRID_SIZE}px`,
+                transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
+                transformOrigin: "center center",
+                width: `${mapWidth}px`,
+                height: `${mapHeight}px`,
               }}
             >
-              {/* Optimized grid background with minimal re-renders */}
+              {/* Crisp grid background that scales with zoom */}
               <div
                 className="absolute inset-0 border border-gray-300 pointer-events-none"
                 style={{ 
-                  width: `${GRID_COLS * GRID_SIZE}px`, 
-                  height: `${GRID_ROWS * GRID_SIZE}px`,
+                  width: `${mapWidth}px`, 
+                  height: `${mapHeight}px`,
                   backgroundImage: `
                     linear-gradient(to right, rgba(156, 163, 175, 0.3) 1px, transparent 1px),
                     linear-gradient(to bottom, rgba(156, 163, 175, 0.3) 1px, transparent 1px)
@@ -278,15 +390,15 @@ export function SimulationMap() {
                 }}
               />
 
-              {/* Render only route and blockage cells for better performance */}
+              {/* Crisp route rendering with native sizing */}
               {mockRoutes.map((route) => 
                 route.path.map((point, index) => (
                   <div
                     key={`route-${route.id}-${index}`}
                     className={`absolute ${getRouteColorClass(route.color)} pointer-events-none`}
                     style={{
-                      left: `${point.x * GRID_SIZE}px`,
-                      top: `${point.y * GRID_SIZE}px`,
+                      left: `${point.x * GRID_SIZE + 1}px`,
+                      top: `${point.y * GRID_SIZE + 1}px`,
                       width: `${GRID_SIZE}px`,
                       height: `${GRID_SIZE}px`,
                     }}
@@ -295,15 +407,15 @@ export function SimulationMap() {
                 ))
               )}
 
-              {/* Render blockage cells */}
+              {/* Crisp blockage rendering with native sizing */}
               {mockBlockages.map((blockage) => 
                 blockage.path.map((point, index) => (
                   <div
                     key={`blockage-${blockage.id}-${index}`}
                     className="absolute bg-red-500 pointer-events-none"
                     style={{
-                      left: `${point.x * GRID_SIZE}px`,
-                      top: `${point.y * GRID_SIZE}px`,
+                      left: `${point.x * GRID_SIZE + 1}px`,
+                      top: `${point.y * GRID_SIZE + 1}px`,
                       width: `${GRID_SIZE}px`,
                       height: `${GRID_SIZE}px`,
                     }}
@@ -312,16 +424,17 @@ export function SimulationMap() {
                 ))
               )}
 
-              {/* Trucks with improved performance and click handling */}
-              {mockTrucks.map((truck) => (
+              {/* Crisp trucks with zoom-aware sizing */}
+              {currentVehicles.map((truck) => (
                 <div
                   key={`truck-${truck.id}`} 
                   className="absolute cursor-pointer hover:scale-110 transition-transform z-20 flex items-center justify-center pointer-events-auto"
                   style={{ 
-                    top: `${truck.y * GRID_SIZE}px`, 
-                    left: `${truck.x * GRID_SIZE}px`,
+                    top: `${truck.y * GRID_SIZE + 1}px`, 
+                    left: `${truck.x * GRID_SIZE + 1}px`,
                     width: `${GRID_SIZE}px`,
                     height: `${GRID_SIZE}px`,
+                    imageRendering: "crisp-edges", 
                   }}
                   onClick={(e) => {
                     e.stopPropagation()
@@ -331,21 +444,22 @@ export function SimulationMap() {
                 >
                   <Truck 
                     className={getTruckColorClass(truck.color)}
-                    size={Math.max(16, GRID_SIZE - 4)}
+                    size={Math.max(12, Math.min(32, GRID_SIZE - 2))}
                   />
                 </div>
               ))}
 
-              {/* Gas stations with improved performance and click handling */}
-              {mockGasStations.map((station) => (
+              {/* Crisp gas stations with zoom-aware sizing */}
+              {currentGasStations.map((station) => (
                 <div
                   key={`station-${station.id}`} 
                   className="absolute cursor-pointer hover:scale-110 transition-transform z-20 flex items-center justify-center pointer-events-auto"
                   style={{ 
-                    top: `${station.y * GRID_SIZE}px`, 
-                    left: `${station.x * GRID_SIZE}px`,
+                    top: `${station.y * GRID_SIZE + 1}px`, 
+                    left: `${station.x * GRID_SIZE + 1}px`,
                     width: `${GRID_SIZE}px`,
                     height: `${GRID_SIZE}px`,
+                    imageRendering: "crisp-edges",
                   }}
                   onClick={(e) => {
                     e.stopPropagation()
@@ -355,27 +469,28 @@ export function SimulationMap() {
                 >
                   <Fuel 
                     className="text-green-600"
-                    size={Math.max(16, GRID_SIZE - 4)} 
+                    size={Math.max(12, Math.min(32, GRID_SIZE - 2))} 
                   />
                 </div>
               ))}
 
-              {/* Delivery points with improved performance using MapPin icon */}
+              {/* Crisp delivery points with zoom-aware sizing */}
               {mockDeliveryPoints.map((point) => (
                 <div 
                   key={`delivery-${point.id}`} 
                   className="absolute z-10 flex items-center justify-center pointer-events-none" 
                   style={{ 
-                    top: `${point.y * GRID_SIZE}px`, 
-                    left: `${point.x * GRID_SIZE}px`,
+                    top: `${point.y * GRID_SIZE + 1}px`, 
+                    left: `${point.x * GRID_SIZE + 1}px`,
                     width: `${GRID_SIZE}px`,
                     height: `${GRID_SIZE}px`,
+                    imageRendering: "crisp-edges", 
                   }}
                   title={point.name}
                 >
                   <MapPin 
                     className="text-red-600"
-                    size={Math.max(14, GRID_SIZE - 2)} 
+                    size={Math.max(10, Math.min(28, GRID_SIZE - 3))} 
                   />
                 </div>
               ))}
@@ -387,6 +502,9 @@ export function SimulationMap() {
       {/* Truck Modal with color matching */}
       <Dialog open={showTruckModal} onOpenChange={setShowTruckModal}>
         <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Información del Camión {selectedTruck?.id}</DialogTitle>
+          </DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Truck 
@@ -394,7 +512,6 @@ export function SimulationMap() {
                 size={32} 
               />
               <div>
-                <h3 className="font-semibold">Camión {selectedTruck?.id}</h3>
                 <div className="text-sm text-gray-600 space-y-1">
                   <div>Tipo: {selectedTruck?.type}</div>
                   <div>Pedidos pendientes: {selectedTruck?.pendingOrders}</div>
