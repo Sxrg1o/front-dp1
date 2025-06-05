@@ -9,12 +9,15 @@ export interface Camion {
 }
 
 export interface Pedido {
-  fechaHoraCreacion: string
+  id: number
   idCliente: string
-  posX: number
-  posY: number
-  volumenM3: number
-  horasLimite: number
+  x: number
+  y: number
+  volumen: number
+  tiempoCreacion: number
+  tiempoLimite: number
+  atendido: boolean
+  descartado: boolean
 }
 
 export interface FileUploadRequest {
