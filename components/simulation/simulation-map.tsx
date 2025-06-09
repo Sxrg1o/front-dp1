@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback, useEffect } from "react"
-import { ZoomIn, ZoomOut, Truck, Fuel, Home, MapPin, Slash } from "lucide-react"
+import { ZoomIn, ZoomOut, Truck, Fuel, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -9,71 +9,20 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { useWebSocket } from "@/hooks/use-websocket"
+import type { BloqueoDTO, CamionDTO, PedidoDTO, TanqueDTO } from "@/lib/types"
+import type { SimulacionSnapshotDTO } from "@/lib/types";
+const BACKEND = process.env.NEXT_PUBLIC_SIM_BACKEND_URL!;
 
 const BASE_GRID_SIZE = 15 
 const GRID_COLS = 70 
-const GRID_ROWS = 50 
-
-const mockTrucks = [
-  { id: "#040", x: 15, y: 10, pendingOrders: "2/5", fuelLevel: "Alto", status: "Operativo", type: "T1", color: "green" },
-  { id: "#041", x: 12, y: 7, pendingOrders: "3/5", fuelLevel: "Medio", status: "Operativo", type: "T2", color: "yellow" },
-  { id: "#042", x: 20, y: 12, pendingOrders: "1/5", fuelLevel: "Bajo", status: "En ruta", type: "T3", color: "blue" },
-]
-
-const mockGasStations = [
-  { id: "GS001", x: 10, y: 5, name: "Planta Central", glpLevel: 75 },
-  { id: "GS002", x: 20, y: 15, name: "Estación Norte", glpLevel: 25 },
-  { id: "GS003", x: 25, y: 12, name: "Estación Sur", glpLevel: 8 },
-]
-
-const mockDeliveryPoints = [
-  { id: "DP001", x: 17, y: 6, name: "Punto de entrega 1" },
-  { id: "DP002", x: 9, y: 14, name: "Punto de entrega 2" },
-  { id: "DP003", x: 22, y: 19, name: "Punto de entrega 3" },
-]
-
-
-const mockRoutes = [
-  {
-    id: "R001",
-    truckId: "#040",
-    color: "green",
-    path: [
-      { x: 15, y: 10 }, { x: 16, y: 10 }, { x: 17, y: 10 }, { x: 17, y: 9 }, { x: 17, y: 8 },
-      { x: 17, y: 7 }, { x: 17, y: 6 }
-    ]
-  },
-  {
-    id: "R002", 
-    truckId: "#041",
-    color: "yellow",
-    path: [
-      { x: 12, y: 7 }, { x: 11, y: 7 }, { x: 10, y: 7 }, { x: 9, y: 7 }, { x: 9, y: 8 },
-      { x: 9, y: 9 }, { x: 9, y: 10 }, { x: 9, y: 11 }, { x: 9, y: 12 }, { x: 9, y: 13 }, { x: 9, y: 14 }
-    ]
-  }
-]
-
-const mockBlockages = [
-  {
-    id: "BL001",
-    description: "Bloqueo de carretera",
-    path: [
-      { x: 13, y: 9 }, { x: 14, y: 9 }, { x: 15, y: 9 }, { x: 16, y: 9 }
-    ]
-  },
-  {
-    id: "BL002", 
-    description: "Manifestación",
-    path: [
-      { x: 14, y: 11 }, { x: 14, y: 12 }, { x: 15, y: 12 }
-    ]
-  }
-]
+const GRID_ROWS = 50
 
 export function SimulationMap() {
-  const { vehicles, tanks, isConnected } = useWebSocket()
-  
+  const {isConnected } = useWebSocket()
+  const [pedidos, setPedidos] = useState<PedidoDTO[]>([])
+  const [camiones, setCamiones] = useState<CamionDTO[]>([])
+  const [tanques, setTanques] = useState<TanqueDTO[]>([])
+  const [bloqueos, setBloqueos] = useState<BloqueoDTO[]>([])
   const [zoomLevel, setZoomLevel] = useState(100)
   const [showTruckModal, setShowTruckModal] = useState(false)
   const [showTankStatus, setShowTankStatus] = useState(false)
@@ -81,31 +30,38 @@ export function SimulationMap() {
   const [selectedStation, setSelectedStation] = useState<any>(null)
   const [showBreakdownModal, setShowBreakdownModal] = useState(false)
   const [selectedBreakdown, setSelectedBreakdown] = useState("")
-  
-  const displayVehicles = vehicles.map(vehicle => ({
-    id: vehicle.codigo,
-    x: vehicle.x,
-    y: vehicle.y,
-    pendingOrders: `${vehicle.pendingOrders}/5`,
-    fuelLevel: vehicle.fuelLevel > 75 ? 'Alto' : vehicle.fuelLevel > 25 ? 'Medio' : 'Bajo',
-    status: vehicle.estado,
-    type: vehicle.codigo.startsWith('T1') ? 'T1' : vehicle.codigo.startsWith('T2') ? 'T2' : 'T3',
-    color: vehicle.estado === 'Operativo' ? 'green' : 
-           vehicle.estado === 'En ruta' ? 'blue' : 
-           vehicle.estado === 'Cargando' ? 'yellow' : 'red'
-  }))
-  
-  const displayGasStations = tanks.map(tank => ({
-    id: tank.id,
-    x: Math.floor(Math.random() * 30) + 5, 
-    y: Math.floor(Math.random() * 20) + 5,
-    name: tank.name,
-    glpLevel: tank.glpLevel
-  }))
-  
-  const currentVehicles = isConnected && vehicles.length > 0 ? displayVehicles : mockTrucks
-  const currentGasStations = isConnected && tanks.length > 0 ? displayGasStations : mockGasStations
-  
+  const [isRunning, setIsRunning] = useState(false)
+  const [tiempoActual, setTiempoActual] = useState(0)
+  const activeBlockages = bloqueos.filter(
+      (b) => tiempoActual >= b.inicio && tiempoActual < b.fin
+  );
+
+  // Ahora, para transformar esa lista en “currentVehicles” (lo que se dibujará):
+  const currentVehicles = Array.isArray(camiones)
+      ? camiones
+          .filter((c) => c && typeof c.id === "string")
+          .map((c: CamionDTO) => {
+            const id = c.id;
+            const x = c.x;
+            const y = c.y;
+            const fuelLevel = c.volumenDisponible; // ✅ real
+            const status = c.estado;                   // ✅ real
+            const type =
+                typeof id === "string" && id.startsWith("TA") ? "TA" :
+                    typeof id === "string" && id.startsWith("TB") ? "TB" :
+                        typeof id === "string" && id.startsWith("TC") ? "TC" :
+                            typeof id === "string" && id.startsWith("TD") ? "TD" :
+                                "??";
+            const color =
+                status === "AVAILABLE"  ? "green"  :
+                    status === "RETURNING"  ? "yellow" :
+                        status === "DELIVERING" ? "blue"   :
+                            "purple";
+            return { id, x, y, fuelLevel, status, type, color };
+          })
+      : [];// Si camiones no es array (todavía), devolvemos array vacío.
+
+
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
@@ -149,6 +105,63 @@ export function SimulationMap() {
     return { x: newOffsetX, y: newOffsetY }
   }, [mapWidth, mapHeight])
 
+  useEffect(() => {
+    if (!isRunning) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${BACKEND}/api/simulacion/step`, { method: "POST" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const snapshot: SimulacionSnapshotDTO = await res.json();
+
+        // 1) Actualiza el estado normal:
+        setTiempoActual(snapshot.tiempoActual);
+        setCamiones(snapshot.camiones);
+        setPedidos(snapshot.pedidos);
+        setBloqueos(snapshot.bloqueos);
+        const tanquesDTO: TanqueDTO[] = Array.isArray(snapshot.tanques)
+            ? snapshot.tanques.map((t: any, idx: number) => ({
+              id:                t.id ?? `tanque-${idx}`,       // <— obligatorio
+              nombre:            t.name ?? `Tanque ${idx + 1}`,   // o t.nombre si el back lo manda
+              posX:              t.x,
+              posY:              t.y,
+              capacidadTotal:    t.capacidadTotal,
+              capacidadActual:   t.capacidadDisponible,
+            }))
+            : [];
+        setTanques(tanquesDTO);
+
+        // 2) AÑADE AQUÍ la detección de “llegada de nuevo pedido”:
+        snapshot.pedidos.forEach((p) => {
+          // Suponiendo que PedidoDTO tiene un campo 'tiempoCreacion'
+          if (p.tiempoCreacion === snapshot.tiempoActual) {
+            console.log(
+                `🆕 Pedido ${p.id} recibido en (${p.x}, ${p.y}), ` +
+                `volumen=${p.volumen} m³, límite t+${p.tiempoLimite}`
+            );
+          }
+        });
+
+        // 3) (Opcional) más logs, por ejemplo, si quieres mostrar cuando se dispara
+        //    un evento de bloqueo, avería, etc., igual buscarías el campo correspondiente:
+        snapshot.bloqueos.forEach((b) => {
+          if (b.inicio === snapshot.tiempoActual) {
+            console.log(
+                `⛔ Bloqueo ${b.id} comienza en () a t+${b.inicio}`
+            );
+          }
+        });
+
+        // Por último, cualquier otro log que te interese...
+      } catch (err) {
+        console.error("❌ Falló step en frontend:", err);
+        clearInterval(interval);
+        setIsRunning(false);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [isRunning]);
   useEffect(() => {
     return () => {
       if (throttleRef.current) {
@@ -232,9 +245,9 @@ export function SimulationMap() {
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     if (wheelThrottleRef.current) return
-    
+
     wheelThrottleRef.current = requestAnimationFrame(() => {
       const delta = e.deltaY > 0 ? -25 : 25
       setZoomLevel((prev) => {
@@ -247,11 +260,25 @@ export function SimulationMap() {
     if (wheelDebounceRef.current) {
       clearTimeout(wheelDebounceRef.current)
     }
-    
+
     wheelDebounceRef.current = setTimeout(() => {
       setPanOffset(prev => constrainPanOffset(prev))
     }, 150) as any
   }, [constrainPanOffset])
+  useEffect(() => {
+    const el = mapContainerRef.current;
+    if (!el) return;
+    // Creamos un handler nativo validado
+    const onWheelNative = (e: WheelEvent) => {
+      e.preventDefault();
+      // Convertimos al tipo React.WheelEvent para reutilizar tu lógica
+      handleWheel((e as unknown) as React.WheelEvent<HTMLDivElement>);
+    };
+    el.addEventListener("wheel", onWheelNative, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheelNative);
+    };
+  }, [handleWheel]);
 
   const handleTruckClick = (truck: any) => {
     setSelectedTruck(truck)
@@ -295,17 +322,10 @@ export function SimulationMap() {
     }
     return colorMap[color as keyof typeof colorMap] || "text-blue-600"
   }
-
-  const getRouteColorClass = (color: string) => {
-    const colorMap = {
-      green: "bg-green-500/30",   
-      yellow: "bg-yellow-500/30",
-      blue: "bg-blue-500/30", 
-      purple: "bg-purple-500/30"
-    }
-    return colorMap[color as keyof typeof colorMap] || "bg-blue-500/40"
-  }
-
+  const handlePedidoClick = (p: PedidoDTO) => {
+    // Aquí p.es tu PedidoDTO con id, idCliente, volumen, etc.
+    alert(`Pedido ${p.idCliente}:\nVolumen=${p.volumen}m³\nLímite t+${p.tiempoLimite}`);
+  };
   useEffect(() => {
     if (mapContainerRef.current) {
       const initialOffset = constrainPanOffset({ x: 0, y: 0 })
@@ -353,10 +373,50 @@ export function SimulationMap() {
             <div className="text-sm text-gray-600">
               Arrastrar para mover • Rueda para zoom
             </div>
+            {/* … dentro de tu return( … ) */}
+            <div className="mt-4 flex justify-center">
+              <Button
+                  onClick={async () => {
+                    try {
+                      // 1) Resetear en t = 0
+                      const r0 = await fetch(`${BACKEND}/api/simulacion/reset`, { method: "POST" });
+                      if (!r0.ok) throw new Error(`HTTP ${r0.status}`);
+
+                      // 2) Avanzar 1440 veces (un paso por minuto) para llegar a t = 1440
+                      for (let i = 0; i < 1440; i++) {
+                        const rStep = await fetch(`${BACKEND}/api/simulacion/step`, { method: "POST" });
+                        if (!rStep.ok) throw new Error(`Step falló en iteración ${i}, HTTP ${rStep.status}`);
+                      }
+
+                      // 3) Obtener el snapshot en t = 1440
+                      const rFinal = await fetch(`${BACKEND}/api/simulacion/step`, { method: "POST" });
+                      if (!rFinal.ok) throw new Error(`HTTP ${rFinal.status}`);
+                      const snapshot: SimulacionSnapshotDTO = await rFinal.json();
+
+                      // 4) Rellenar el estado de React con ese snapshot
+                      setTiempoActual(snapshot.tiempoActual);
+                      setCamiones(snapshot.camiones);
+                      setPedidos(snapshot.pedidos);
+                      setBloqueos(snapshot.bloqueos);
+                      setTanques(snapshot.tanques);
+
+                      // 5) Ahora sí activamos el loop normal que hace un step cada 500 ms
+                      setIsRunning(true);
+                    } catch (err) {
+                      console.error("❌ Error al saltar a t=1440:", err);
+                    }
+                  }}
+              >
+                {isRunning ? "Detener Simulación" : "Iniciar Simulación"}
+              </Button>
+            </div>
+            <div className="text-sm text-gray-600 ml-4">
+              Tiempo simulado: {tiempoActual} min
+            </div>
           </div>
 
           {/* Map Container with crisp zoom rendering */}
-          <div 
+          <div
             ref={mapContainerRef}
             className="relative overflow-hidden border border-gray-300 rounded-lg cursor-grab active:cursor-grabbing select-none touch-none"
             style={{ height: "600px" }}
@@ -364,7 +424,6 @@ export function SimulationMap() {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            onWheel={handleWheel}
             onContextMenu={(e) => e.preventDefault()}
           >
             <div
@@ -379,8 +438,8 @@ export function SimulationMap() {
               {/* Crisp grid background that scales with zoom */}
               <div
                 className="absolute inset-0 border border-gray-300 pointer-events-none"
-                style={{ 
-                  width: `${mapWidth}px`, 
+                style={{
+                  width: `${mapWidth}px`,
                   height: `${mapHeight}px`,
                   backgroundImage: `
                     linear-gradient(to right, rgba(156, 163, 175, 0.3) 1px, transparent 1px),
@@ -389,110 +448,108 @@ export function SimulationMap() {
                   backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`
                 }}
               />
-
-              {/* Crisp route rendering with native sizing */}
-              {mockRoutes.map((route) => 
-                route.path.map((point, index) => (
-                  <div
-                    key={`route-${route.id}-${index}`}
-                    className={`absolute ${getRouteColorClass(route.color)} pointer-events-none`}
-                    style={{
-                      left: `${point.x * GRID_SIZE + 1}px`,
-                      top: `${point.y * GRID_SIZE + 1}px`,
-                      width: `${GRID_SIZE}px`,
-                      height: `${GRID_SIZE}px`,
-                    }}
-                    title={`Ruta ${route.id} - Camión ${route.truckId}`}
-                  />
-                ))
+              {/* Bloqueos dinámicos desde snapshot.bloqueos */}
+              {activeBlockages.map((b, bi) =>
+                  b.nodes.map((pt, idx) => (
+                      <div
+                          key={`${b.id}-${idx}`}
+                          className="absolute bg-red-500 pointer-events-none"
+                          style={{
+                            left:  `${pt.x * GRID_SIZE + 1}px`,
+                            top:   `${pt.y * GRID_SIZE + 1}px`,
+                            width: `${GRID_SIZE}px`,
+                            height:`${GRID_SIZE}px`,
+                          }}
+                          title={`${b.descripcion} [t=${b.inicio}–${b.fin})`}
+                      />
+                  ))
               )}
 
-              {/* Crisp blockage rendering with native sizing */}
-              {mockBlockages.map((blockage) => 
-                blockage.path.map((point, index) => (
-                  <div
-                    key={`blockage-${blockage.id}-${index}`}
-                    className="absolute bg-red-500 pointer-events-none"
-                    style={{
-                      left: `${point.x * GRID_SIZE + 1}px`,
-                      top: `${point.y * GRID_SIZE + 1}px`,
-                      width: `${GRID_SIZE}px`,
-                      height: `${GRID_SIZE}px`,
-                    }}
-                    title={`Bloqueo: ${blockage.description}`}
-                  />
-                ))
-              )}
 
               {/* Crisp trucks with zoom-aware sizing */}
-              {currentVehicles.map((truck) => (
-                <div
-                  key={`truck-${truck.id}`} 
-                  className="absolute cursor-pointer hover:scale-110 transition-transform z-20 flex items-center justify-center pointer-events-auto"
-                  style={{ 
-                    top: `${truck.y * GRID_SIZE + 1}px`, 
-                    left: `${truck.x * GRID_SIZE + 1}px`,
-                    width: `${GRID_SIZE}px`,
-                    height: `${GRID_SIZE}px`,
-                    imageRendering: "crisp-edges", 
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleTruckClick(truck)
-                  }}
-                  title={`Camión ${truck.id} (${truck.type})`}
-                >
-                  <Truck 
-                    className={getTruckColorClass(truck.color)}
-                    size={Math.max(12, Math.min(32, GRID_SIZE - 2))}
-                  />
-                </div>
+              {currentVehicles?.map((truck) => (
+                  <div
+                      key={`truck-${truck.id}`}
+                      className="absolute …"
+                      style={{
+                        top: `${truck.y * GRID_SIZE + 1}px`,
+                        left: `${truck.x * GRID_SIZE + 1}px`,
+                        width: `${GRID_SIZE}px`,
+                        height: `${GRID_SIZE}px`,
+                        imageRendering: "crisp-edges",
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleTruckClick(truck)
+                      }}
+                      title={`Camión ${truck.id} (${truck.type})`}
+                  >
+                    <Truck
+                        className={getTruckColorClass(truck.color)}
+                        size={Math.max(12, Math.min(32, GRID_SIZE - 2))}
+                    />
+                  </div>
               ))}
+
 
               {/* Crisp gas stations with zoom-aware sizing */}
-              {currentGasStations.map((station) => (
-                <div
-                  key={`station-${station.id}`} 
-                  className="absolute cursor-pointer hover:scale-110 transition-transform z-20 flex items-center justify-center pointer-events-auto"
-                  style={{ 
-                    top: `${station.y * GRID_SIZE + 1}px`, 
-                    left: `${station.x * GRID_SIZE + 1}px`,
-                    width: `${GRID_SIZE}px`,
-                    height: `${GRID_SIZE}px`,
-                    imageRendering: "crisp-edges",
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleStationClick(station)
-                  }}
-                  title={station.name}
-                >
-                  <Fuel 
-                    className="text-green-600"
-                    size={Math.max(12, Math.min(32, GRID_SIZE - 2))} 
-                  />
-                </div>
+              {tanques.map(station => (
+                  <div
+                      key={station.id}
+                      className="absolute cursor-pointer z-20 transform hover:scale-110"
+                      style={{
+                        left:  `${station.posX * GRID_SIZE + 1}px`,
+                        top:   `${station.posY * GRID_SIZE + 1}px`,
+                        width:  `${GRID_SIZE}px`,
+                        height: `${GRID_SIZE}px`,
+                      }}
+                      onClick={() => handleStationClick(station)}
+                      title={`${station.nombre}: ${station.capacidadActual}%`}
+                  >
+                    <Fuel
+                        size={Math.max(12, Math.min(32, GRID_SIZE - 2))}
+                    />
+                  </div>
               ))}
 
-              {/* Crisp delivery points with zoom-aware sizing */}
-              {mockDeliveryPoints.map((point) => (
-                <div 
-                  key={`delivery-${point.id}`} 
-                  className="absolute z-10 flex items-center justify-center pointer-events-none" 
-                  style={{ 
-                    top: `${point.y * GRID_SIZE + 1}px`, 
-                    left: `${point.x * GRID_SIZE + 1}px`,
-                    width: `${GRID_SIZE}px`,
-                    height: `${GRID_SIZE}px`,
-                    imageRendering: "crisp-edges", 
-                  }}
-                  title={point.name}
-                >
-                  <MapPin 
-                    className="text-red-600"
-                    size={Math.max(10, Math.min(28, GRID_SIZE - 3))} 
-                  />
-                </div>
+              {/* Tanques reales */}
+              {tanques?.map((station: any) => (
+                  <div
+                      key={`station-${station.posX}-${station.posY}`}
+                      className="absolute cursor-pointer hover:scale-110 transition-transform z-20 flex items-center justify-center pointer-events-auto"
+                      style={{
+                        top: `${station.posY * GRID_SIZE + 1}px`,
+                        left: `${station.posX * GRID_SIZE + 1}px`,
+                        width: `${GRID_SIZE}px`,
+                        height: `${GRID_SIZE}px`,
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleStationClick(station)
+                      }}
+                      title={station.nombre}
+                  >
+                    <Fuel className="text-green-600" size={Math.max(12, Math.min(32, GRID_SIZE - 2))} />
+                  </div>
+              ))}
+
+              {/* Puntos de entrega reales */}
+              {/* Pedidos activos */}
+              {pedidos.map((p) => (
+                  <div
+                      key={`pedido-${p.id}`}
+                      className="absolute z-10 flex items-center justify-center pointer-events-auto"
+                      style={{
+                        top:    `${p.y * GRID_SIZE + 1}px`,
+                        left:   `${p.x * GRID_SIZE + 1}px`,
+                        width:  `${GRID_SIZE}px`,
+                        height: `${GRID_SIZE}px`,
+                      }}
+                      onClick={() => handlePedidoClick(p)}
+                      title={`Pedido ${p.idCliente}`}
+                  >
+                    <MapPin size={Math.max(12, Math.min(32, GRID_SIZE - 2))} />
+                  </div>
               ))}
             </div>
           </div>
@@ -507,9 +564,9 @@ export function SimulationMap() {
           </DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Truck 
-                className={selectedTruck ? getTruckColorClass(selectedTruck.color) : "text-blue-600"} 
-                size={32} 
+              <Truck
+                className={selectedTruck ? getTruckColorClass(selectedTruck.color) : "text-blue-600"}
+                size={32}
               />
               <div>
                 <div className="text-sm text-gray-600 space-y-1">
@@ -580,12 +637,12 @@ export function SimulationMap() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Fuel 
+                      <Fuel
                         className={`text-${getTankColor(selectedStation.glpLevel)}-600`}
                         size={24}
                       />
                       <span className="font-medium">
-                        {selectedStation.glpLevel > 50 ? 'Operativo' : 
+                        {selectedStation.glpLevel > 50 ? 'Operativo' :
                          selectedStation.glpLevel > 10 ? 'Alerta' : 'Emergencia'}
                       </span>
                     </div>
@@ -597,18 +654,18 @@ export function SimulationMap() {
                     Nivel de GLP: {selectedStation.glpLevel}% - {selectedStation.name}
                   </p>
                   <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div 
-                      className={`bg-${getTankColor(selectedStation.glpLevel)}-500 h-2 rounded-full`} 
+                    <div
+                      className={`bg-${getTankColor(selectedStation.glpLevel)}-500 h-2 rounded-full`}
                       style={{ width: `${selectedStation.glpLevel}%` }}
                     ></div>
                   </div>
-                  
+
                   {selectedStation.glpLevel <= 10 && (
                     <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded text-sm text-red-700">
                       ⚠️ Nivel crítico de GLP. Reabastecimiento urgente requerido.
                     </div>
                   )}
-                  
+
                   {selectedStation.glpLevel > 10 && selectedStation.glpLevel <= 50 && (
                     <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm text-yellow-700">
                       ⚠️ Nivel bajo de GLP. Programar reabastecimiento.

@@ -9,12 +9,16 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { avanzarUnMinuto } from "@/lib/services/simulacion-service"
+import {SimulacionSnapshotDTO} from "@/lib/types";
 
 export function SimulationControls() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [searchVehicle, setSearchVehicle] = useState("")
   const [searchOrder, setSearchOrder] = useState("")
 
+
+  const [snapshot, setSnapshot] = useState<SimulacionSnapshotDTO | null>(null)
   const mockVehicles = [
     { id: "VH001", position: "[22,04]", capacity: 25, fuelLevel: "[22,04]", status: "Operativo" },
     { id: "VH002", position: "[22,04]", capacity: 25, fuelLevel: "[22,04]", status: "En ruta" },
@@ -31,7 +35,15 @@ export function SimulationControls() {
     { id: "27496", client: "C-19", quantity: 4, status: "Completado"},
     { id: "27495", client: "C-46", quantity: 12, status: "Por atender"},
   ]
-
+  const handleStep = async () => {
+    try {
+      const nuevoEstado = await avanzarUnMinuto()
+      setSnapshot(nuevoEstado)
+      console.log("⏩ Nuevo estado:", nuevoEstado)
+    } catch (error) {
+      console.error("Error al avanzar un minuto:", error)
+    }
+  }
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying)
   }
@@ -49,17 +61,6 @@ export function SimulationControls() {
 
     return <Badge variant={variants[status as keyof typeof variants] || "default"}>{status}</Badge>
   }
-
-  const getPriorityBadge = (priority: string) => {
-    const variants = {
-      Alta: "destructive",
-      Media: "default",
-      Baja: "secondary",
-    } as const
-
-    return <Badge variant={variants[priority as keyof typeof variants] || "default"}>{priority}</Badge>
-  }
-
   return (
     <Card className="h-lv py-0 gap-0">
       <CardHeader className="bg-blue-100 rounded-t-lg py-4">
@@ -78,7 +79,7 @@ export function SimulationControls() {
           <Button size="sm" variant="outline" title="Detener">
             <Square className="h-4 w-4" />
           </Button>
-          <Button size="sm" variant="outline" title="Avanzar">
+          <Button size="sm" variant="outline" title="Avanzar" onClick={handleStep}>
             <SkipForward className="h-4 w-4" />
           </Button>
         </div>

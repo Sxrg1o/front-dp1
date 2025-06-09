@@ -8,12 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { SimulationControls } from "@/components/simulation/simulation-controls"
 import { SimulationMap } from "@/components/simulation/simulation-map"
+import {SimulacionSnapshotDTO} from "@/lib/types";
 
 export function SimulacionSection() {
   const [hasActiveSolution, setHasActiveSolution] = useState(false)
   const [escenario, setEscenario] = useState("")
   const [fechaInicio, setFechaInicio] = useState("")
   const [fechaFinal, setFechaFinal] = useState("")
+  const [snapshot, setSnapshot] = useState<SimulacionSnapshotDTO | null>(null)
 
   const handleFechaInicioChange = (fecha: string) => {
     setFechaInicio(fecha)
@@ -134,7 +136,7 @@ export function SimulacionSection() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Simulation Map - Takes 2 columns */}
         <div className="xl:col-span-2">
-          <SimulationMap />
+          <SimulationMap  />
         </div>
 
         {/* Control Panel - Takes 1 column */}
