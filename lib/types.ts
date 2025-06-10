@@ -66,9 +66,9 @@ export interface TanqueDTO {
 
 export interface BloqueoDTO {
   id: string
-  descripcion: string
-  inicio: number
-  fin: number
+  description: string
+  tiempoInicio: number
+  tiempoFin: number
   nodes: { x: number; y: number }[]
 }
 

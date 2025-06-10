@@ -22,7 +22,6 @@ export function SimulationMap() {
   const [pedidos, setPedidos] = useState<PedidoDTO[]>([])
   const [camiones, setCamiones] = useState<CamionDTO[]>([])
   const [tanques, setTanques] = useState<TanqueDTO[]>([])
-  const [bloqueos, setBloqueos] = useState<BloqueoDTO[]>([])
   const [zoomLevel, setZoomLevel] = useState(100)
   const [showTruckModal, setShowTruckModal] = useState(false)
   const [showTankStatus, setShowTankStatus] = useState(false)
@@ -32,8 +31,9 @@ export function SimulationMap() {
   const [selectedBreakdown, setSelectedBreakdown] = useState("")
   const [isRunning, setIsRunning] = useState(false)
   const [tiempoActual, setTiempoActual] = useState(0)
+  const [bloqueos, setBloqueos] = useState<BloqueoDTO[]>([])
   const activeBlockages = bloqueos.filter(
-      (b) => tiempoActual >= b.inicio && tiempoActual < b.fin
+      (b) => tiempoActual >= b.tiempoInicio && tiempoActual < b.tiempoFin
   );
 
   // Ahora, para transformar esa lista en “currentVehicles” (lo que se dibujará):
@@ -145,9 +145,9 @@ export function SimulationMap() {
         // 3) (Opcional) más logs, por ejemplo, si quieres mostrar cuando se dispara
         //    un evento de bloqueo, avería, etc., igual buscarías el campo correspondiente:
         snapshot.bloqueos.forEach((b) => {
-          if (b.inicio === snapshot.tiempoActual) {
+          if (b.tiempoInicio === snapshot.tiempoActual) {
             console.log(
-                `⛔ Bloqueo ${b.id} comienza en () a t+${b.inicio}`
+                `⛔ Bloqueo ${b.id} comienza en () a t+${b.tiempoInicio}`
             );
           }
         });
@@ -449,7 +449,7 @@ export function SimulationMap() {
                 }}
               />
               {/* Bloqueos dinámicos desde snapshot.bloqueos */}
-              {activeBlockages.map((b, bi) =>
+              {activeBlockages.map((b) =>
                   b.nodes.map((pt, idx) => (
                       <div
                           key={`${b.id}-${idx}`}
@@ -460,11 +460,37 @@ export function SimulationMap() {
                             width: `${GRID_SIZE}px`,
                             height:`${GRID_SIZE}px`,
                           }}
-                          title={`${b.descripcion} [t=${b.inicio}–${b.fin})`}
+                          title={`${b.description} [t=${b.tiempoInicio}-${b.tiempoFin})`}
                       />
                   ))
               )}
-
+              {/* SVG overlay para renderizar los bloqueos como líneas */}
+              <svg
+                  className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                  style={{ width: `${GRID_SIZE * GRID_COLS}px`, height: `${GRID_SIZE * GRID_ROWS}px` }}
+              >
+                {activeBlockages.map((b) =>
+                    // Recorremos cada par consecutivo de nodos
+                    b.nodes.slice(0, -1).map((pt, i) => {
+                      const next = b.nodes[i + 1];
+                      const x1 = pt.x * GRID_SIZE + GRID_SIZE / 2;
+                      const y1 = pt.y * GRID_SIZE + GRID_SIZE / 2;
+                      const x2 = next.x * GRID_SIZE + GRID_SIZE / 2;
+                      const y2 = next.y * GRID_SIZE + GRID_SIZE / 2;
+                      return (
+                          <line
+                              key={`${b.id}-${i}`}
+                              x1={x1}
+                              y1={y1}
+                              x2={x2}
+                              y2={y2}
+                              stroke="red"
+                              strokeWidth={2}
+                          />
+                      );
+                    })
+                )}
+              </svg>
 
               {/* Crisp trucks with zoom-aware sizing */}
               {currentVehicles?.map((truck) => (
@@ -492,46 +518,30 @@ export function SimulationMap() {
               ))}
 
 
-              {/* Crisp gas stations with zoom-aware sizing */}
-              {tanques.map(station => (
+              {/* Tanques reales */}
+              {tanques.map((station: TanqueDTO) => (
                   <div
                       key={station.id}
-                      className="absolute cursor-pointer z-20 transform hover:scale-110"
+                      className="absolute cursor-pointer hover:scale-110 transition-transform z-20 flex items-center justify-center pointer-events-auto"
                       style={{
-                        left:  `${station.posX * GRID_SIZE + 1}px`,
-                        top:   `${station.posY * GRID_SIZE + 1}px`,
+                        top:    `${station.posY * GRID_SIZE + 1}px`,
+                        left:   `${station.posX * GRID_SIZE + 1}px`,
                         width:  `${GRID_SIZE}px`,
                         height: `${GRID_SIZE}px`,
                       }}
-                      onClick={() => handleStationClick(station)}
-                      title={`${station.nombre}: ${station.capacidadActual}%`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStationClick(station);
+                      }}
+                      title={station.nombre}
                   >
                     <Fuel
+                        className="text-green-600"
                         size={Math.max(12, Math.min(32, GRID_SIZE - 2))}
                     />
                   </div>
               ))}
 
-              {/* Tanques reales */}
-              {tanques?.map((station: any) => (
-                  <div
-                      key={`station-${station.posX}-${station.posY}`}
-                      className="absolute cursor-pointer hover:scale-110 transition-transform z-20 flex items-center justify-center pointer-events-auto"
-                      style={{
-                        top: `${station.posY * GRID_SIZE + 1}px`,
-                        left: `${station.posX * GRID_SIZE + 1}px`,
-                        width: `${GRID_SIZE}px`,
-                        height: `${GRID_SIZE}px`,
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleStationClick(station)
-                      }}
-                      title={station.nombre}
-                  >
-                    <Fuel className="text-green-600" size={Math.max(12, Math.min(32, GRID_SIZE - 2))} />
-                  </div>
-              ))}
 
               {/* Puntos de entrega reales */}
               {/* Pedidos activos */}
