@@ -1,5 +1,5 @@
-import api from '../api-client'
-import { Pedido, FileUploadResponse } from '../types'
+import api from '../lib/api-client'
+import { Pedido, FileUploadResponse } from '../types/types'
 
 export const pedidosService = {
   // Obtener todos los pedidos

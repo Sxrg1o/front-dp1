@@ -3,10 +3,10 @@
 import { Bell, PanelLeftClose } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useSidebar } from "@/components/ui/sidebar"
-import { PedidosSection } from "@/components/sections/pedidos-section"
-import { CamionesSection } from "@/components/sections/camiones-section"
-import { SimulacionSection } from "@/components/sections/simulacion-section"
-import { OperacionesSection } from "@/components/sections/operaciones-section"
+import { PedidosSection } from "@/components/features/pedidos/pedidos-section"
+import { CamionesSection } from "@/components/features/camiones/camiones-section"
+import { SimulacionSection } from "@/components/features/simulation/SimulacionSection"
+import { OperacionesSection } from "@/components/features/operations/operaciones-section"
 
 interface MainContentProps {
   activeSection: string

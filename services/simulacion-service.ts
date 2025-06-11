@@ -1,4 +1,4 @@
-import { SimulacionSnapshotDTO } from '../types'
+import { SimulacionSnapshotDTO } from '../types/types'
 
 export async function avanzarUnMinuto(): Promise<SimulacionSnapshotDTO> {
     const res = await fetch("/api/simulacion/step", {

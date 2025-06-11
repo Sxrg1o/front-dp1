@@ -1,11 +1,11 @@
-export interface Camion {
-  codigo: string
-  tipo: string
-  capacidadM3: number
-  pesoTotalTon: number
-  estado?: 'Operativo' | 'Mantenimiento' | 'Averiado' | 'En ruta'
-  fuelLevel?: 'Alto' | 'Medio' | 'Bajo'
-  pendingOrders?: string
+export interface TruckDTO {
+  id: string
+  x: number
+  y: number
+  disponible: number
+  combustibleDisponible: number
+  status: string
+  consumoAcumulado: number
 }
 
 export interface Pedido {
@@ -59,7 +59,7 @@ export interface TanqueDTO {
   id: string
   nombre: string
   capacidadTotal: number
-  capacidadActual: number
+  capacidadDisponible: number
   posX: number
   posY: number
 }

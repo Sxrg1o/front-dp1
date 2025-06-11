@@ -57,8 +57,8 @@ export function CamionesSection() {
 
   const filteredCamiones = camiones.filter(
     (camion) =>
-      camion.codigo.toLowerCase().includes(filtroId.toLowerCase()) &&
-      (filtroTipo === "Todos los tipos" || camion.tipo === filtroTipo)
+      camion.id.toLowerCase().includes(filtroId.toLowerCase()) &&
+      (filtroTipo === "Todos los tipos" || camion.id.substring(0, 2) === filtroTipo)
   )
 
   const totalPages = Math.ceil(filteredCamiones.length / itemsPerPage)
@@ -247,21 +247,21 @@ export function CamionesSection() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Código</TableHead>
-                  <TableHead className="text-center">Tipo</TableHead>
-                  <TableHead className="text-center">Capacidad (m³)</TableHead>
-                  <TableHead className="text-center">Peso Total (Ton)</TableHead>
+                  <TableHead>ID</TableHead>
+                  <TableHead className="text-center">Lugar</TableHead>
+                  <TableHead className="text-center">Combustible</TableHead>
                   <TableHead className="text-center">Estado</TableHead>
+                  <TableHead className="text-center">Acumulado</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedCamiones.map((camion) => (
-                  <TableRow key={camion.codigo}>
-                    <TableCell className="font-medium">{camion.codigo}</TableCell>
-                    <TableCell className="text-center">{camion.tipo}</TableCell>
-                    <TableCell className="text-center">{camion.capacidadM3.toFixed(1)}</TableCell>
-                    <TableCell className="text-center">{camion.pesoTotalTon.toFixed(1)}</TableCell>
-                    <TableCell className="text-center">{getEstadoBadge(camion.estado)}</TableCell>
+                  <TableRow key={camion.id}>
+                    <TableCell className="font-medium">{camion.id}</TableCell>
+                    <TableCell className="text-center">{camion.x}, {camion.y}</TableCell>
+                    <TableCell className="text-center">{camion.combustibleDisponible}</TableCell>
+                    <TableCell className="text-center">{camion.status}</TableCell>
+                    <TableCell className="text-center">{camion.consumoAcumulado}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
