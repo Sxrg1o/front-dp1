@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { SidebarProvider } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
-import { MainContent } from "@/components/main-content"
+import { AppSidebar } from "@/components/layout/app-sidebar"
+import { MainContent } from "@/components/layout/main-content"
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState("pedidos")

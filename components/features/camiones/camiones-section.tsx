@@ -6,14 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { camionesService, Camion } from "@/lib/api"
+import { camionesService, TruckDTO } from "@/lib/api"
 
 export function CamionesSection() {
-  const [camiones, setCamiones] = useState<Camion[]>([])
+  const [camiones, setCamiones] = useState<TruckDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filtroId, setFiltroId] = useState("")
@@ -44,21 +43,10 @@ export function CamionesSection() {
     fetchCamiones()
   }, [])
 
-  const getEstadoBadge = (estado: string = "Operativo") => {
-    const variants = {
-      Operativo: "secondary",
-      Mantenimiento: "default",
-      Averiado: "destructive",
-      "En ruta": "outline",
-    } as const
-
-    return <Badge variant={variants[estado as keyof typeof variants] || "default"}>{estado}</Badge>
-  }
-
   const filteredCamiones = camiones.filter(
     (camion) =>
-      camion.codigo.toLowerCase().includes(filtroId.toLowerCase()) &&
-      (filtroTipo === "Todos los tipos" || camion.tipo === filtroTipo)
+      camion.id.toLowerCase().includes(filtroId.toLowerCase()) &&
+      (filtroTipo === "Todos los tipos" || camion.id.substring(0, 2) === filtroTipo)
   )
 
   const totalPages = Math.ceil(filteredCamiones.length / itemsPerPage)
@@ -247,21 +235,21 @@ export function CamionesSection() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Código</TableHead>
-                  <TableHead className="text-center">Tipo</TableHead>
-                  <TableHead className="text-center">Capacidad (m³)</TableHead>
-                  <TableHead className="text-center">Peso Total (Ton)</TableHead>
+                  <TableHead>ID</TableHead>
+                  <TableHead className="text-center">Lugar</TableHead>
+                  <TableHead className="text-center">GLP</TableHead>
                   <TableHead className="text-center">Estado</TableHead>
+                  <TableHead className="text-center">Combustible</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedCamiones.map((camion) => (
-                  <TableRow key={camion.codigo}>
-                    <TableCell className="font-medium">{camion.codigo}</TableCell>
-                    <TableCell className="text-center">{camion.tipo}</TableCell>
-                    <TableCell className="text-center">{camion.capacidadM3.toFixed(1)}</TableCell>
-                    <TableCell className="text-center">{camion.pesoTotalTon.toFixed(1)}</TableCell>
-                    <TableCell className="text-center">{getEstadoBadge(camion.estado)}</TableCell>
+                  <TableRow key={camion.id}>
+                    <TableCell className="font-medium">{camion.id}</TableCell>
+                    <TableCell className="text-center">{camion.x}, {camion.y}</TableCell>
+                    <TableCell className="text-center">{camion.disponible}</TableCell>
+                    <TableCell className="text-center">{camion.status}</TableCell>
+                    <TableCell className="text-center">{camion.combustibleDisponible}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
