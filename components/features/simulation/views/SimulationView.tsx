@@ -5,14 +5,16 @@ import { SimulationMap } from "@/components/features/simulation/components/simul
 import { SimulationControls } from "@/components/features/simulation/components/simulation-controls"
 import { formatSimulationTime } from "@/utils/timeUtils"
 import { 
-  SimulacionSnapshotDTO, 
   PedidoDTO, 
   TruckDTO, 
   TanqueDTO, 
   BloqueoDTO 
 } from "@/types/types"
-
-const BACKEND = 'http://localhost:8080'
+import { 
+  avanzarUnMinuto, 
+  resetSimulacion,
+  avanzarMultiplesMinutos
+} from "@/services/simulacion-service"
 
 interface SimulationConfig {
   escenario: 'semanal' | 'colapso'
@@ -62,9 +64,7 @@ export function SimulationView({ config }: SimulationViewProps) {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`${BACKEND}/api/simulacion/step`, { method: "POST" })
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const snapshot: SimulacionSnapshotDTO = await res.json()
+        const snapshot = await avanzarUnMinuto()
 
         setTiempoActual(snapshot.tiempoActual)
         setCamiones(snapshot.camiones)
@@ -113,20 +113,11 @@ export function SimulationView({ config }: SimulationViewProps) {
     if (!isRunning) {
       // Primera vez o después de stop - inicializar simulación
       try {
-        // Resetear en t = 0
-        const r0 = await fetch(`${BACKEND}/api/simulacion/reset`, { method: "POST" })
-        if (!r0.ok) throw new Error(`HTTP ${r0.status}`)
-
-        // Avanzar a t = 1440
-        for (let i = 0; i < 1440; i++) {
-          const rStep = await fetch(`${BACKEND}/api/simulacion/step`, { method: "POST" })
-          if (!rStep.ok) throw new Error(`Step falló en iteración ${i}, HTTP ${rStep.status}`)
-        }
-
-        // Obtener snapshot final
-        const rFinal = await fetch(`${BACKEND}/api/simulacion/step`, { method: "POST" })
-        if (!rFinal.ok) throw new Error(`HTTP ${rFinal.status}`)
-        const finalSnapshot: SimulacionSnapshotDTO = await rFinal.json()
+        // Resetear la simulación
+        await resetSimulacion()
+        
+        // Avanzar a t = 1440 (un día completo)
+        const finalSnapshot = await avanzarMultiplesMinutos(1440)
 
         // Actualizar estado
         setTiempoActual(finalSnapshot.tiempoActual)
