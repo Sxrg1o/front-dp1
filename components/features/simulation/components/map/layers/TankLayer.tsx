@@ -10,9 +10,9 @@ interface TankLayerProps {
 export function TankLayer({ tanques, GRID_SIZE, onTankClick }: TankLayerProps) {
   return (
     <>
-      {tanques.map((station: TanqueDTO) => (
+      {tanques.map((station: TanqueDTO, index: number) => (
         <div
-          key={station.id}
+          key={`tank-${station.nombre || 'unnamed'}-${station.posX}-${station.posY}-${index}`}
           className="absolute cursor-pointer hover:scale-110 transition-transform z-20 flex items-center justify-center pointer-events-auto"
           style={{
             top: `${station.posY * GRID_SIZE + 1}px`,

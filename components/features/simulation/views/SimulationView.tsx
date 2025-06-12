@@ -72,11 +72,11 @@ export function SimulationView({ config }: SimulationViewProps) {
         setBloqueos(snapshot.bloqueos)
 
         const tanquesDTO: TanqueDTO[] = Array.isArray(snapshot.tanques)
-          ? snapshot.tanques.map((t: any, idx: number) => ({
+          ? snapshot.tanques.map((t: TanqueDTO, idx: number) => ({
               id: t.id ?? `tanque-${idx}`,
-              nombre: t.name ?? `Tanque ${idx + 1}`,
-              posX: t.x,
-              posY: t.y,
+              nombre: t.nombre ?? `Tanque ${idx + 1}`,
+              posX: t.posX,
+              posY: t.posY,
               capacidadTotal: t.capacidadTotal,
               capacidadDisponible: t.capacidadDisponible,
             }))

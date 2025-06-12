@@ -37,15 +37,25 @@ export function PedidosSection() {
           setError(null)
         }
         console.log('DATA RECIBIDA', data)
-      } catch (error: any | undefined) {
+      } catch (error: unknown) {
         console.error('Error loading pedidos:', error)
 
-        if (error.response?.status === 500) {
-          setError('Error del servidor (500): No se pudieron obtener los pedidos')
-        } else if (error.response?.status >= 400) {
-          setError(`Error del servidor (${error.response.status}): No se pudieron obtener los pedidos`)
-        } else if (error.code === 'ECONNREFUSED' || error.message?.includes('Network Error')) {
-          setError('No se pudo conectar con el servidor: No se obtuvieron pedidos')
+        if (error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as { response?: { status: number } }
+          if (axiosError.response?.status === 500) {
+            setError('Error del servidor (500): No se pudieron obtener los pedidos')
+          } else if (axiosError.response?.status && axiosError.response.status >= 400) {
+            setError(`Error del servidor (${axiosError.response.status}): No se pudieron obtener los pedidos`)
+          } else {
+            setError('Error al cargar los pedidos: No se obtuvieron pedidos')
+          }
+        } else if (error && typeof error === 'object' && 'code' in error) {
+          const networkError = error as { code?: string; message?: string }
+          if (networkError.code === 'ECONNREFUSED' || networkError.message?.includes('Network Error')) {
+            setError('No se pudo conectar con el servidor: No se obtuvieron pedidos')
+          } else {
+            setError('Error al cargar los pedidos: No se obtuvieron pedidos')
+          }
         } else {
           setError('Error al cargar los pedidos: No se obtuvieron pedidos')
         }
@@ -111,18 +121,28 @@ export function PedidosSection() {
       } else {
         setError(response.message || 'Error al procesar el archivo')
       }
-    } catch (error: any | undefined) {
-      console.error('Error uploading file:', error)
+    } catch (error: unknown) {
+        console.error('Error loading pedidos:', error)
 
-      if (error.response?.status === 500) {
-        setError('Error del servidor (500): No se pudo procesar el archivo')
-      } else if (error.response?.status >= 400) {
-        setError(`Error del servidor (${error.response.status}): No se pudo procesar el archivo`)
-      } else if (error.code === 'ECONNREFUSED' || error.message?.includes('Network Error')) {
-        setError('No se pudo conectar con el servidor: No se pudo subir el archivo')
-      } else {
-        setError('Error al subir el archivo: Verifique el formato e intente nuevamente')
-      }
+        if(error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as { response?: { status: number } }
+          if (axiosError.response?.status === 500) {
+            setError('Error del servidor (500): No se pudieron obtener los pedidos')
+          } else if (axiosError.response?.status && axiosError.response.status >= 400) {
+            setError(`Error del servidor (${axiosError.response.status}): No se pudieron obtener los pedidos`)
+          } else {
+            setError('Error al cargar los pedidos: No se obtuvieron pedidos')
+          }
+        } else if (error && typeof error === 'object' && 'code' in error) {
+          const networkError = error as { code?: string; message?: string }
+          if (networkError.code === 'ECONNREFUSED' || networkError.message?.includes('Network Error')) {
+            setError('No se pudo conectar con el servidor: No se obtuvieron pedidos')
+          } else {
+            setError('Error al cargar los pedidos: No se obtuvieron pedidos')
+          }
+        } else {
+          setError('Error al cargar los pedidos: No se obtuvieron pedidos')
+        }
     } finally {
       setIsSubmitting(false)
     }

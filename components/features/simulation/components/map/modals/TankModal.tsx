@@ -2,12 +2,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Fuel } from "lucide-react"
+import { TanqueDTO } from "@/types/types"
 
 interface TankModalProps {
   isOpen: boolean
   onClose: () => void
-  tank: any
-  getTankColor: (level: number) => string
+  tank: TanqueDTO | null
   getTankIconClass: (level: number) => string
   getTankBadgeVariant: (level: number) => "secondary" | "default" | "destructive"
   getTankBackgroundColor: (level: number) => string
@@ -17,7 +17,6 @@ export function TankModal({
   isOpen, 
   onClose, 
   tank, 
-  getTankColor, 
   getTankIconClass,
   getTankBadgeVariant, 
   getTankBackgroundColor 

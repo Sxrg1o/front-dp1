@@ -2,11 +2,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { TruckDTO } from "@/types/types"
 
 interface BreakdownModalProps {
   isOpen: boolean
   onClose: () => void
-  truck: any
+  truck: TruckDTO | null
   selectedBreakdown: string
   onBreakdownChange: (value: string) => void
   breakdownTypes: Record<string, string>

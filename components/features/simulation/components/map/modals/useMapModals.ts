@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { PedidoDTO, TanqueDTO } from "@/types/types"
+import { PedidoDTO, TanqueDTO, TruckDTO } from "@/types/types"
 
 export function useMapModals() {
   // Estados de los modales
@@ -9,7 +9,7 @@ export function useMapModals() {
   const [showOrderModal, setShowOrderModal] = useState(false)
   
   // Estados de elementos seleccionados
-  const [selectedTruck, setSelectedTruck] = useState<any>(null)
+  const [selectedTruck, setSelectedTruck] = useState<TruckDTO | null>(null)
   const [selectedTank, setSelectedTank] = useState<TanqueDTO | null>(null)
   const [selectedBreakdown, setSelectedBreakdown] = useState<string>("")
   const [selectedOrder, setSelectedOrder] = useState<PedidoDTO | null>(null)
@@ -22,7 +22,7 @@ export function useMapModals() {
   }
 
   // Handlers
-  const handleTruckClick = (truck: any) => {
+  const handleTruckClick = (truck: TruckDTO) => {
     setSelectedTruck(truck)
     setShowTruckModal(true)
   }

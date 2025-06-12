@@ -1,11 +1,9 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { avanzarUnMinuto } from "@/services/simulacion-service"
 import { 
-  SimulacionSnapshotDTO, 
   PedidoDTO, 
   TruckDTO
 } from "@/types/types"

@@ -1,49 +1,13 @@
+import { TruckDTO } from "@/types/types"
 import { Truck } from "lucide-react"
-import type { TruckDTO } from "@/types/types"
-
-interface Vehicle {
-  id: string
-  x: number
-  y: number
-  fuelLevel: number
-  status: string
-  type: string
-  color: string
-}
 
 interface TruckLayerProps {
   camiones: TruckDTO[]
   GRID_SIZE: number
-  onTruckClick: (truck: Vehicle) => void
+  onTruckClick: (truck: TruckDTO) => void
 }
 
 export function TruckLayer({ camiones, GRID_SIZE, onTruckClick }: TruckLayerProps) {
-  // Transformar camiones a currentVehicles
-  const currentVehicles: Vehicle[] = Array.isArray(camiones)
-    ? camiones
-        .filter((c) => c && typeof c.id === "string")
-        .map((c: TruckDTO) => {
-          const id = c.id
-          const x = c.x
-          const y = c.y
-          const fuelLevel = c.combustibleDisponible
-          const status = c.status
-          const type =
-            typeof id === "string" && id.startsWith("TA") ? "TA" :
-            typeof id === "string" && id.startsWith("TB") ? "TB" :
-            typeof id === "string" && id.startsWith("TC") ? "TC" :
-            typeof id === "string" && id.startsWith("TD") ? "TD" :
-            "??"
-          const color =
-            typeof id === "string" && id.startsWith("TA") ? "green" :
-            typeof id === "string" && id.startsWith("TB") ? "yellow" :
-            typeof id === "string" && id.startsWith("TC") ? "blue" :
-            typeof id === "string" && id.startsWith("TD") ? "purple" :
-            "gray"
-          return { id, x, y, fuelLevel, status, type, color }
-        })
-    : []
-
   const getTruckColorClass = (color: string) => {
     const colorMap = {
       green: "text-green-600",
@@ -55,9 +19,25 @@ export function TruckLayer({ camiones, GRID_SIZE, onTruckClick }: TruckLayerProp
     return colorMap[color as keyof typeof colorMap] || "text-gray-600"
   }
 
+  const getTruckColor = (id: string) => {
+    if (id.startsWith("TA")) return "green"
+    if (id.startsWith("TB")) return "yellow"
+    if (id.startsWith("TC")) return "blue"
+    if (id.startsWith("TD")) return "purple"
+    return "gray"
+  }
+
+  const getTruckType = (id: string) => {
+    if (id.startsWith("TA")) return "TA"
+    if (id.startsWith("TB")) return "TB"
+    if (id.startsWith("TC")) return "TC"
+    if (id.startsWith("TD")) return "TD"
+    return "??"
+  }
+
   return (
     <>
-      {currentVehicles?.map((truck) => (
+      {camiones?.map((truck) => (
         <div
           key={`truck-${truck.id}`}
           className="absolute cursor-pointer hover:scale-110 transition-transform z-30 flex items-center justify-center pointer-events-auto"
@@ -72,10 +52,10 @@ export function TruckLayer({ camiones, GRID_SIZE, onTruckClick }: TruckLayerProp
             e.stopPropagation()
             onTruckClick(truck)
           }}
-          title={`Camión ${truck.id} (${truck.type})`}
+          title={`Camión ${truck.id} (${getTruckType(truck.id)})`}
         >
           <Truck
-            className={getTruckColorClass(truck.color)}
+            className={getTruckColorClass(getTruckColor(truck.id))}
             size={Math.max(12, Math.min(32, GRID_SIZE - 2))}
           />
         </div>

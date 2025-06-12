@@ -37,7 +37,7 @@ export function SimulationMap({
 }: SimulationMapProps) {
   
   const {
-    zoomLevel, panOffset, isDragging, GRID_SIZE, mapWidth, mapHeight, mapContainerRef,
+    zoomLevel, panOffset, GRID_SIZE, mapWidth, mapHeight, mapContainerRef,
     handleZoomIn, handleZoomOut, handleResetZoom, handleMouseDown, handleMouseMove, handleMouseUp, setupWheelEventListener,
   } = useMapInteraction({
     gridCols: GRID_COLS, gridRows: GRID_ROWS, baseGridSize: BASE_GRID_SIZE,
@@ -169,7 +169,6 @@ export function SimulationMap({
         isOpen={showTankModal}
         onClose={closeTankModal}
         tank={selectedTank}
-        getTankColor={getTankColor}
         getTankIconClass={getTankColor}
         getTankBadgeVariant={getTankBadgeVariant}
         getTankBackgroundColor={getTankBackgroundColor}
