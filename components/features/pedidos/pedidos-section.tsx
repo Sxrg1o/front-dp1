@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Filter, Upload, ChevronLeft, ChevronRight } from "lucide-react"
+import { Filter, Upload, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -37,7 +37,7 @@ export function PedidosSection() {
           setError(null)
         }
         console.log('DATA RECIBIDA', data)
-      } catch (error: any) {
+      } catch (error: any | undefined) {
         console.error('Error loading pedidos:', error)
 
         if (error.response?.status === 500) {
@@ -111,7 +111,7 @@ export function PedidosSection() {
       } else {
         setError(response.message || 'Error al procesar el archivo')
       }
-    } catch (error: any) {
+    } catch (error: any | undefined) {
       console.error('Error uploading file:', error)
 
       if (error.response?.status === 500) {

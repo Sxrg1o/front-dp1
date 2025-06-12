@@ -74,7 +74,7 @@ export interface BloqueoDTO {
 
 export interface SimulacionSnapshotDTO {
   tiempoActual: number
-  camiones: CamionDTO[]
+  camiones: TruckDTO[]
   pedidos: PedidoDTO[]
   tanques: TanqueDTO[]
   bloqueos: BloqueoDTO[]

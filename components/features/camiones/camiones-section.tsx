@@ -6,14 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { camionesService, Camion } from "@/lib/api"
+import { camionesService, TruckDTO } from "@/lib/api"
 
 export function CamionesSection() {
-  const [camiones, setCamiones] = useState<Camion[]>([])
+  const [camiones, setCamiones] = useState<TruckDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filtroId, setFiltroId] = useState("")
@@ -43,17 +42,6 @@ export function CamionesSection() {
 
     fetchCamiones()
   }, [])
-
-  const getEstadoBadge = (estado: string = "Operativo") => {
-    const variants = {
-      Operativo: "secondary",
-      Mantenimiento: "default",
-      Averiado: "destructive",
-      "En ruta": "outline",
-    } as const
-
-    return <Badge variant={variants[estado as keyof typeof variants] || "default"}>{estado}</Badge>
-  }
 
   const filteredCamiones = camiones.filter(
     (camion) =>
@@ -249,9 +237,9 @@ export function CamionesSection() {
                 <TableRow>
                   <TableHead>ID</TableHead>
                   <TableHead className="text-center">Lugar</TableHead>
-                  <TableHead className="text-center">Combustible</TableHead>
+                  <TableHead className="text-center">GLP</TableHead>
                   <TableHead className="text-center">Estado</TableHead>
-                  <TableHead className="text-center">Acumulado</TableHead>
+                  <TableHead className="text-center">Combustible</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -259,9 +247,9 @@ export function CamionesSection() {
                   <TableRow key={camion.id}>
                     <TableCell className="font-medium">{camion.id}</TableCell>
                     <TableCell className="text-center">{camion.x}, {camion.y}</TableCell>
-                    <TableCell className="text-center">{camion.combustibleDisponible}</TableCell>
+                    <TableCell className="text-center">{camion.disponible}</TableCell>
                     <TableCell className="text-center">{camion.status}</TableCell>
-                    <TableCell className="text-center">{camion.consumoAcumulado}</TableCell>
+                    <TableCell className="text-center">{camion.combustibleDisponible}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

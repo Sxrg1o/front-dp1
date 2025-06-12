@@ -3,13 +3,19 @@
 import { useState } from "react"
 import { SimulationConfigForm } from "./views/SimulationConfigForm"
 import { SimulationView } from "./views/SimulationView"
-import { SimulacionSnapshotDTO } from "@/types/types"
+
+interface SimulationConfig {
+  escenario: 'semanal' | 'colapso'
+  fechaInicio: string
+  fechaFinal?: string
+}
 
 export function SimulacionSection() {
   const [hasActiveSolution, setHasActiveSolution] = useState(false)
-  const [snapshot, setSnapshot] = useState<SimulacionSnapshotDTO | null>(null)
+  const [simulationConfig, setSimulationConfig] = useState<SimulationConfig | null>(null)
 
-  const handleStartSimulation = () => {
+  const handleStartSimulation = (config: SimulationConfig) => {
+    setSimulationConfig(config)
     setHasActiveSolution(true)
   }
 
@@ -18,7 +24,7 @@ export function SimulacionSection() {
       {!hasActiveSolution ? (
         <SimulationConfigForm onStartSimulation={handleStartSimulation} />
       ) : (
-        <SimulationView snapshot={snapshot} />
+        simulationConfig && <SimulationView config={simulationConfig} />
       )}
     </>
   )

@@ -7,14 +7,32 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
+interface SimulationConfig {
+  escenario: 'semanal' | 'colapso'
+  fechaInicio: string
+  fechaFinal?: string
+}
+
 interface SimulationConfigFormProps {
-  onStartSimulation: () => void
+  onStartSimulation: (config: SimulationConfig) => void
 }
 
 export function SimulationConfigForm({ onStartSimulation }: SimulationConfigFormProps) {
-  const [escenario, setEscenario] = useState("")
+  const [escenario, setEscenario] = useState<'semanal' | 'colapso' | "">("")
   const [fechaInicio, setFechaInicio] = useState("")
   const [fechaFinal, setFechaFinal] = useState("")
+  const [archivoPedidos, setArchivoPedidos] = useState<File | null>(null)
+
+  const handleStartClick = () => {
+    if (escenario && fechaInicio && archivoPedidos) {
+      const config: SimulationConfig = {
+        escenario: escenario as 'semanal' | 'colapso',
+        fechaInicio,
+        ...(escenario === 'semanal' && fechaFinal && { fechaFinal })
+      }
+      onStartSimulation(config)
+    }
+  }
 
   const handleFechaInicioChange = (fecha: string) => {
     setFechaInicio(fecha)
@@ -27,8 +45,9 @@ export function SimulationConfigForm({ onStartSimulation }: SimulationConfigForm
   }
 
   const handleEscenarioChange = (value: string) => {
-    setEscenario(value)
-    if (value === "semanal" && fechaInicio) {
+    const escenarioValue = value as 'semanal' | 'colapso'
+    setEscenario(escenarioValue)
+    if (escenarioValue === "semanal" && fechaInicio) {
       const startDate = new Date(fechaInicio)
       const endDate = new Date(startDate)
       endDate.setDate(startDate.getDate() + 7)
@@ -36,6 +55,11 @@ export function SimulationConfigForm({ onStartSimulation }: SimulationConfigForm
     } else {
       setFechaFinal("")
     }
+  }
+
+  const handleArchivoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null
+    setArchivoPedidos(file)
   }
 
   return (
@@ -87,10 +111,23 @@ export function SimulationConfigForm({ onStartSimulation }: SimulationConfigForm
 
           <div className="space-y-2">
             <Label className="py-2 font-bold">Archivos de Configuración</Label>
+            <p className="text-sm text-gray-600">Los campos marcados con * son obligatorios</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="pedidos" className="py-1">Pedidos</Label>
-                <Input id="pedidos" type="file" />
+                <Label htmlFor="pedidos" className="py-1">Pedidos *</Label>
+                <Input 
+                  id="pedidos" 
+                  type="file" 
+                  accept=".csv,.xlsx,.xls,.json"
+                  onChange={handleArchivoChange}
+                  className={!archivoPedidos ? "border-red-300" : ""}
+                />
+                {archivoPedidos && (
+                  <p className="text-xs text-green-600 mt-1">✓ {archivoPedidos.name}</p>
+                )}
+                {!archivoPedidos && (
+                  <p className="text-xs text-red-500 mt-1">Este archivo es obligatorio</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="mantenimientos" className="py-1">Mantenimientos</Label>
@@ -107,7 +144,11 @@ export function SimulationConfigForm({ onStartSimulation }: SimulationConfigForm
             </div>
           </div>
 
-          <Button onClick={onStartSimulation} className="w-full">
+          <Button 
+            onClick={handleStartClick} 
+            className="w-full" 
+            disabled={!escenario || !fechaInicio || !archivoPedidos}
+          >
             Iniciar Simulación
           </Button>
         </CardContent>
