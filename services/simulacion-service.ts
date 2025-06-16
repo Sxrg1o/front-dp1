@@ -1,39 +1,45 @@
-import { SimulacionSnapshotDTO } from '../types/types'
-import api from '../lib/api-client'
+import { SimulacionSnapshotDTO, SimulationStatusDTO, SimulationRequest } from '../types/types';
+import api from '../lib/api-client';
 
-export async function avanzarUnMinuto(): Promise<SimulacionSnapshotDTO> {
+export async function iniciarNuevaSimulacion(request: SimulationRequest): Promise<SimulationStatusDTO> {
     try {
-        const response = await api.post('/simulacion/step')
-        return response.data
+        const response = await api.post('/simulacion/start', request);
+        return response.data;
+    } catch (error) {
+        throw new Error("Error al iniciar la simulación");
+    }
+}
+
+export async function avanzarUnMinuto(simulationId: string): Promise<SimulacionSnapshotDTO> {
+    try {
+        const response = await api.post(`/simulacion/${simulationId}/step`);
+        return response.data;
     } catch (error) {
         throw new Error("Error al avanzar un minuto de simulación")
     }
 }
 
-export async function resetSimulacion(): Promise<void> {
+export async function resetSimulacion(simulationId: string): Promise<void> {
     try {
-        await api.post('/simulacion/reset')
+        await api.post(`/simulacion/${simulationId}/reset`)
     } catch (error) {
         throw new Error("Error al resetear la simulación")
     }
 }
 
-export async function obtenerSnapshot(): Promise<SimulacionSnapshotDTO> {
+export async function obtenerSnapshot(simulationId: string): Promise<SimulacionSnapshotDTO> {
     try {
-        const response = await api.get('/simulacion/snapshot')
+        const response = await api.get(`/simulacion/${simulationId}/snapshot`)
         return response.data
     } catch (error) {
         throw new Error("Error al obtener el snapshot de simulación")
     }
 }
 
-// Función para avanzar múltiples minutos de una vez
-export async function avanzarMultiplesMinutos(minutos: number): Promise<SimulacionSnapshotDTO> {
+export async function avanzarMultiplesMinutos(simulationId: string, pasos: number): Promise<SimulacionSnapshotDTO> {
     let ultimoSnapshot: SimulacionSnapshotDTO | null = null;
-    
-    for (let i = 0; i < minutos; i++) {
-        ultimoSnapshot = await avanzarUnMinuto();
+    for (let i = 0; i < pasos; i++) {
+        ultimoSnapshot = await avanzarUnMinuto(simulationId);
     }
-    
     return ultimoSnapshot as SimulacionSnapshotDTO;
 }

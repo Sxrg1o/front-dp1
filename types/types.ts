@@ -79,3 +79,24 @@ export interface SimulacionSnapshotDTO {
   tanques: TanqueDTO[]
   bloqueos: BloqueoDTO[]
 }
+
+export interface SimulationRequest {
+  nombreSimulacion: string;
+  fileIdPedidos: string;
+  fileIdBloqueos?: string; 
+  fileIdAverias?: string;
+}
+
+export interface SimulationStatusDTO {
+  simulationId: string;
+  nombreSimulacion: string;
+  estado: 'INITIALIZED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED'; 
+  avance: number;
+}
+
+// Added from user prompt
+export interface SimulationConfig {
+  escenario: 'semanal' | 'colapso';
+  fechaInicio: string;
+  fechaFinal?: string;
+}

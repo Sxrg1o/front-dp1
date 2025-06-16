@@ -8,12 +8,14 @@ import {
   PedidoDTO, 
   TruckDTO, 
   TanqueDTO, 
-  BloqueoDTO 
+  BloqueoDTO,
+  SimulacionSnapshotDTO
 } from "@/types/types"
 import { 
   avanzarUnMinuto, 
   resetSimulacion,
-  avanzarMultiplesMinutos
+  avanzarMultiplesMinutos,
+  obtenerSnapshot 
 } from "@/services/simulacion-service"
 
 interface SimulationConfig {
@@ -23,10 +25,11 @@ interface SimulationConfig {
 }
 
 interface SimulationViewProps {
-  config: SimulationConfig
+  config: SimulationConfig;
+  simulationId: string;
 }
 
-export function SimulationView({ config }: SimulationViewProps) {
+export function SimulationView({ config, simulationId }: SimulationViewProps) {
   // Estados de la simulación
   const [pedidos, setPedidos] = useState<PedidoDTO[]>([])
   const [camiones, setCamiones] = useState<TruckDTO[]>([])
@@ -35,6 +38,8 @@ export function SimulationView({ config }: SimulationViewProps) {
   const [isRunning, setIsRunning] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [tiempoActual, setTiempoActual] = useState(0)
+  const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
+
 
   // Funciones auxiliares para formateo
   const formatDate = (dateString: string) => {
@@ -58,32 +63,53 @@ export function SimulationView({ config }: SimulationViewProps) {
     }
   }
 
-  // Lógica de simulación
+  // Función para actualizar el estado de la simulación a partir de un snapshot
+  const updateSimulationState = (snapshot: SimulacionSnapshotDTO) => {
+    setTiempoActual(snapshot.tiempoActual);
+    setCamiones(snapshot.camiones || []);
+    setPedidos(snapshot.pedidos || []);
+    setBloqueos(snapshot.bloqueos || []);
+    const tanquesDTO: TanqueDTO[] = Array.isArray(snapshot.tanques)
+      ? snapshot.tanques.map((t: TanqueDTO, idx: number) => ({
+          id: t.id ?? `tanque-${idx}`,
+          nombre: t.nombre ?? `Tanque ${idx + 1}`,
+          posX: t.posX,
+          posY: t.posY,
+          capacidadTotal: t.capacidadTotal,
+          capacidadDisponible: t.capacidadDisponible,
+        }))
+      : [];
+    setTanques(tanquesDTO);
+  };
+
+  // Cargar el snapshot inicial
   useEffect(() => {
-    if (!isRunning || isPaused) return
+    const fetchInitialSnapshot = async () => {
+      if (simulationId) {
+        try {
+          setIsLoadingInitialData(true);
+          const snapshot = await obtenerSnapshot(simulationId);
+          updateSimulationState(snapshot);
+        } catch (err) {
+          console.error("❌ Falló al obtener el snapshot inicial:", err);
+        } finally {
+          setIsLoadingInitialData(false);
+        }
+      }
+    };
+    fetchInitialSnapshot();
+  }, [simulationId]);
+
+
+  // Lógica de simulación (polling)
+  useEffect(() => {
+    if (!isRunning || isPaused || !simulationId) return
 
     const interval = setInterval(async () => {
       try {
-        const snapshot = await avanzarUnMinuto()
+        const snapshot = await avanzarUnMinuto(simulationId)
+        updateSimulationState(snapshot);
 
-        setTiempoActual(snapshot.tiempoActual)
-        setCamiones(snapshot.camiones)
-        setPedidos(snapshot.pedidos)
-        setBloqueos(snapshot.bloqueos)
-
-        const tanquesDTO: TanqueDTO[] = Array.isArray(snapshot.tanques)
-          ? snapshot.tanques.map((t: TanqueDTO, idx: number) => ({
-              id: t.id ?? `tanque-${idx}`,
-              nombre: t.nombre ?? `Tanque ${idx + 1}`,
-              posX: t.posX,
-              posY: t.posY,
-              capacidadTotal: t.capacidadTotal,
-              capacidadDisponible: t.capacidadDisponible,
-            }))
-          : []
-        setTanques(tanquesDTO)
-
-        // Detección de eventos
         snapshot.pedidos.forEach((p) => {
           if (p.tiempoCreacion === snapshot.tiempoActual) {
             console.log(
@@ -92,50 +118,46 @@ export function SimulationView({ config }: SimulationViewProps) {
             )
           }
         })
-
         snapshot.bloqueos.forEach((b) => {
           if (b.tiempoInicio === snapshot.tiempoActual) {
             console.log(`⛔ Bloqueo ${b.id} comienza en t+${b.tiempoInicio}`)
           }
         })
+
       } catch (err) {
         console.error("❌ Falló step en frontend:", err)
-        clearInterval(interval)
-        setIsRunning(false)
+        clearInterval(interval) 
+        setIsRunning(false) 
       }
-    }, 500)
+    }, 1000);
 
     return () => clearInterval(interval)
-  }, [isRunning, isPaused])
+  }, [isRunning, isPaused, simulationId]); // No olvides añadirlo a las dependencias
 
   // Handlers para controles de simulación
   const handlePlay = async () => {
-    if (!isRunning) {
-      // Primera vez o después de stop - inicializar simulación
+    if (!simulationId) return;
+
+    if (!isRunning) { // Primera vez o después de stop
       try {
-        // Resetear la simulación
-        await resetSimulacion()
-        
-        // Avanzar a t = 1440 (un día completo)
-        const finalSnapshot = await avanzarMultiplesMinutos(1440)
-
-        // Actualizar estado
-        setTiempoActual(finalSnapshot.tiempoActual)
-        setCamiones(finalSnapshot.camiones)
-        setPedidos(finalSnapshot.pedidos)
-        setBloqueos(finalSnapshot.bloqueos)
-        setTanques(finalSnapshot.tanques)
-
-        setIsRunning(true)
-        setIsPaused(false)
+        // Si es la primera vez que se da play DESPUÉS de cargar la vista,
+        // el snapshot inicial ya debería estar cargado.
+        // Si se detuvo y se vuelve a iniciar, podríamos querer resetear o continuar.
+        // Por ahora, asumimos que continuar es el comportamiento deseado si ya hay datos.
+        // Si no hay datos (tiempoActual es 0), podría ser un reinicio implícito o cargar el snapshot.
+        if (tiempoActual === 0 && !isLoadingInitialData) { 
+            const initialSnapshot = await obtenerSnapshot(simulationId);
+            updateSimulationState(initialSnapshot);
+        }
+        setIsRunning(true);
+        setIsPaused(false);
       } catch (err) {
-        console.error("❌ Error al inicializar simulación:", err)
+        console.error("❌ Error al (re)iniciar simulación:", err);
       }
-    } else {
-      // Reanudar desde pausa
-      setIsPaused(false)
+    } else { // Reanudar desde pausa
+      setIsPaused(false);
     }
-  }
+  };
 
   const handlePause = () => {
     if (isRunning && !isPaused) {
@@ -143,15 +165,54 @@ export function SimulationView({ config }: SimulationViewProps) {
     }
   }
 
-  const handleStop = () => {
+  const handleStop = async () => {
+    if (!simulationId) return;
     setIsRunning(false)
     setIsPaused(false)
-    setTiempoActual(0)
-    setPedidos([])
-    setCamiones([])
-    setTanques([])
-    setBloqueos([])
+    // Opcional: Resetear el estado visual inmediatamente
+    // setTiempoActual(0); 
+    // setPedidos([]); 
+    // setCamiones([]); 
+    // setTanques([]); 
+    // setBloqueos([]);
+    try {
+      await resetSimulacion(simulationId); 
+      const snapshot = await obtenerSnapshot(simulationId); 
+      updateSimulationState(snapshot);
+    } catch (err) {
+      console.error("❌ Error al detener/resetear la simulación:", err);
+    }
   }
+
+  const handleStepForward = async () => {
+    if (!simulationId || isRunning) return; 
+    try {
+      const snapshot = await avanzarUnMinuto(simulationId);
+      updateSimulationState(snapshot);
+    } catch (err) {
+      console.error("❌ Error al avanzar un minuto:", err);
+    }
+  };
+
+  const handleAdvanceMultipleSteps = async (steps: number) => {
+    if (!simulationId || isRunning) return;
+    try {
+      const snapshot = await avanzarMultiplesMinutos(simulationId, steps);
+      updateSimulationState(snapshot);
+    } catch (err) {
+      console.error(`❌ Error al avanzar ${steps} minutos:`, err);
+    }
+  };
+
+
+  if (isLoadingInitialData && !isRunning) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-xl">Cargando datos de la simulación...</p>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -188,6 +249,7 @@ export function SimulationView({ config }: SimulationViewProps) {
             onPlay={handlePlay}
             onPause={handlePause}
             onStop={handleStop}
+            onStepForward={handleStepForward}
           />
         </div>
       </div>

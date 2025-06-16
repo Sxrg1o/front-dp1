@@ -2,7 +2,6 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { avanzarUnMinuto } from "@/services/simulacion-service"
 import { 
   PedidoDTO, 
   TruckDTO
@@ -17,6 +16,7 @@ interface SimulationControlsProps {
   onPlay: () => void
   onPause: () => void
   onStop: () => void
+  onStepForward: () => void;
 }
 
 export function SimulationControls({ 
@@ -26,17 +26,9 @@ export function SimulationControls({
   isPaused,
   onPlay,
   onPause,
-  onStop
+  onStop,
+  onStepForward
 }: SimulationControlsProps) {
-
-  const handleStep = async () => {
-    try {
-      const nuevoEstado = await avanzarUnMinuto()
-      console.log("⏩ Nuevo estado:", nuevoEstado)
-    } catch (error) {
-      console.error("Error al avanzar un minuto:", error)
-    }
-  }
 
   return (
     <Card className="h-lv py-0 gap-0">
@@ -46,7 +38,7 @@ export function SimulationControls({
         onPlay={onPlay}
         onPause={onPause}
         onStop={onStop}
-        onStep={handleStep}
+        onStepForward={onStepForward}
       />
 
       <CardContent className="p-0">
