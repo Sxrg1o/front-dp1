@@ -6,19 +6,29 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { TabsContent } from "@/components/ui/tabs"
+import { useAppStore } from "@/store/appStore" // Importar el store global
 
-interface OrdersListProps {
-  pedidos: PedidoDTO[]
-}
-
-export function OrdersList({ pedidos }: OrdersListProps) {
+export function OrdersList() {
   const [searchOrder, setSearchOrder] = useState("")
+
+  // Obtener el modo actual
+  const mode = useAppStore((state) => state.mode);
+  
+  // Obtener los pedidos según el modo
+  const pedidos = useAppStore((state) => 
+    mode === 'simulation' 
+      ? state.simulationData.pedidos 
+      : state.operationalData.pedidos
+  )
+  
+  // Filtrar para mostrar solo pedidos pendientes (no atendidos)
+  const pendingPedidos = pedidos.filter(p => !p.atendido)
 
   const getPedidoBadge = (atendido: boolean) => {
     return <Badge variant={atendido ? "secondary" : "destructive"}>{atendido ? "Atendido" : "Pendiente"}</Badge>
   }
 
-  const filteredOrders = pedidos.filter((order) =>
+  const filteredOrders = pendingPedidos.filter((order) =>
     order.id.toString().includes(searchOrder.toLowerCase()) ||
     order.idCliente.toLowerCase().includes(searchOrder.toLowerCase())
   )
@@ -59,7 +69,8 @@ export function OrdersList({ pedidos }: OrdersListProps) {
         </div>
 
         <div className="text-xs text-gray-500 text-center">
-          {filteredOrders.length} de {pedidos.length} pedidos
+          {filteredOrders.length} de {pendingPedidos.length} pedidos pendientes 
+          {pedidos.length > pendingPedidos.length && ` (${pedidos.length - pendingPedidos.length} atendidos)`}
         </div>
       </div>
     </TabsContent>

@@ -2,51 +2,36 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { avanzarUnMinuto } from "@/services/simulacion-service"
-import { 
-  PedidoDTO, 
-  TruckDTO
-} from "@/types/types"
+import { useAppStore } from "@/store/appStore" // Importar el store global
 import { ControlsHeader, VehiclesList, OrdersList, LegendView } from "./controls"
 
-interface SimulationControlsProps {
-  pedidos: PedidoDTO[]
-  camiones: TruckDTO[]
-  isRunning: boolean
-  isPaused: boolean
-  onPlay: () => void
-  onPause: () => void
-  onStop: () => void
-}
-
-export function SimulationControls({ 
-  pedidos, 
-  camiones, 
-  isRunning, 
-  isPaused,
-  onPlay,
-  onPause,
-  onStop
-}: SimulationControlsProps) {
-
-  const handleStep = async () => {
-    try {
-      const nuevoEstado = await avanzarUnMinuto()
-      console.log("⏩ Nuevo estado:", nuevoEstado)
-    } catch (error) {
-      console.error("Error al avanzar un minuto:", error)
-    }
-  }
+export function SimulationControls() {
+  // Obtener el modo actual
+  const mode = useAppStore((state) => state.mode);
+  
+  // Obtener estado según el modo
+  const playbackStatus = useAppStore((state) => 
+    mode === 'simulation' 
+      ? state.simulation.playbackStatus 
+      : state.operational.playbackStatus
+  )
+  
+  // Obtener acciones del store global
+  const { startSimulation, pauseSimulation, stopSimulation, stepForward } = useAppStore()
+  
+  // Determinar si la simulación está en ejecución o pausada
+  const isRunning = playbackStatus === 'running'
+  const isPaused = playbackStatus === 'paused'
 
   return (
     <Card className="h-lv py-0 gap-0">
       <ControlsHeader
         isRunning={isRunning}
         isPaused={isPaused}
-        onPlay={onPlay}
-        onPause={onPause}
-        onStop={onStop}
-        onStep={handleStep}
+        onPlay={startSimulation}
+        onPause={pauseSimulation}
+        onStop={stopSimulation}
+        onStepForward={stepForward}
       />
 
       <CardContent className="p-0">
@@ -64,8 +49,8 @@ export function SimulationControls({
           </TabsList>
 
           <LegendView />
-          <VehiclesList camiones={camiones} />
-          <OrdersList pedidos={pedidos} />
+          <VehiclesList />
+          <OrdersList />
         </Tabs>
       </CardContent>
     </Card>

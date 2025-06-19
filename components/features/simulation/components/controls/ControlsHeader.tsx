@@ -11,7 +11,7 @@ interface ControlsHeaderProps {
   onPlay: () => void
   onPause: () => void
   onStop: () => void
-  onStep: () => void
+  onStepForward: () => void
 }
 
 export function ControlsHeader({
@@ -20,7 +20,7 @@ export function ControlsHeader({
   onPlay,
   onPause,
   onStop,
-  onStep
+  onStepForward
 }: ControlsHeaderProps) {
   return (
     <CardHeader className="bg-blue-100 rounded-t-lg py-4">
@@ -76,7 +76,7 @@ export function ControlsHeader({
           size="sm" 
           variant="outline" 
           title="Avanzar un paso" 
-          onClick={onStep}
+          onClick={onStepForward}
           disabled={isRunning && !isPaused}
         >
           <SkipForward className="h-4 w-4" />
