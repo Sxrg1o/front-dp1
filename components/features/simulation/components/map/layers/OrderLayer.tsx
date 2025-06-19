@@ -1,16 +1,29 @@
 import { MapPin } from "lucide-react"
 import type { PedidoDTO } from "@/types/types"
+import { useAppStore } from "@/store/appStore" // Importar el store global
 
 interface OrderLayerProps {
-  pedidos: PedidoDTO[]
   GRID_SIZE: number
   onOrderClick: (pedido: PedidoDTO) => void
 }
 
-export function OrderLayer({ pedidos, GRID_SIZE, onOrderClick }: OrderLayerProps) {
+export function OrderLayer({ GRID_SIZE, onOrderClick }: OrderLayerProps) {
+  // Obtener el modo actual
+  const mode = useAppStore((state) => state.mode);
+  
+  // Obtener los pedidos según el modo
+  const pedidos = useAppStore((state) => 
+    mode === 'simulation' 
+      ? state.simulationData.pedidos 
+      : state.operationalData.pedidos
+  )
+  
+  // Filtrar los pedidos para mostrar solo los no atendidos
+  const pendingPedidos = pedidos.filter(p => !p.atendido)
+
   return (
     <>
-      {pedidos.map((p) => (
+      {pendingPedidos.map((p) => (
         <div
           key={`pedido-${p.id}`}
           className="absolute z-10 flex items-center justify-center pointer-events-auto cursor-pointer hover:scale-110 transition-transform"

@@ -2,43 +2,36 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { 
-  PedidoDTO, 
-  TruckDTO
-} from "@/types/types"
+import { useAppStore } from "@/store/appStore" // Importar el store global
 import { ControlsHeader, VehiclesList, OrdersList, LegendView } from "./controls"
 
-interface SimulationControlsProps {
-  pedidos: PedidoDTO[]
-  camiones: TruckDTO[]
-  isRunning: boolean
-  isPaused: boolean
-  onPlay: () => void
-  onPause: () => void
-  onStop: () => void
-  onStepForward: () => void;
-}
-
-export function SimulationControls({ 
-  pedidos, 
-  camiones, 
-  isRunning, 
-  isPaused,
-  onPlay,
-  onPause,
-  onStop,
-  onStepForward
-}: SimulationControlsProps) {
+export function SimulationControls() {
+  // Obtener el modo actual
+  const mode = useAppStore((state) => state.mode);
+  
+  // Obtener estado según el modo
+  const playbackStatus = useAppStore((state) => 
+    mode === 'simulation' 
+      ? state.simulation.playbackStatus 
+      : state.operational.playbackStatus
+  )
+  
+  // Obtener acciones del store global
+  const { startSimulation, pauseSimulation, stopSimulation, stepForward } = useAppStore()
+  
+  // Determinar si la simulación está en ejecución o pausada
+  const isRunning = playbackStatus === 'running'
+  const isPaused = playbackStatus === 'paused'
 
   return (
     <Card className="h-lv py-0 gap-0">
       <ControlsHeader
         isRunning={isRunning}
         isPaused={isPaused}
-        onPlay={onPlay}
-        onPause={onPause}
-        onStop={onStop}
-        onStepForward={onStepForward}
+        onPlay={startSimulation}
+        onPause={pauseSimulation}
+        onStop={stopSimulation}
+        onStepForward={stepForward}
       />
 
       <CardContent className="p-0">
@@ -56,8 +49,8 @@ export function SimulationControls({
           </TabsList>
 
           <LegendView />
-          <VehiclesList camiones={camiones} />
-          <OrdersList pedidos={pedidos} />
+          <VehiclesList />
+          <OrdersList />
         </Tabs>
       </CardContent>
     </Card>

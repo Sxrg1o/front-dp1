@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-// C-FIX: Importar SimulationConfig desde el archivo central de tipos
 import { SimulationRequest, SimulationConfig } from "../../../../types/types" 
 import { guardarArchivoTemporal } from "../../../../services/archivo-service"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -9,14 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useAppStore } from "@/store/appStore" // Import the store
 
-
-// C-FIX: Eliminar la definición local de SimulationConfig
-// interface SimulationConfig {
-//   escenario: 'semanal' | 'colapso'
-//   fechaInicio: string
-//   fechaFinal?: string
-// }
 
 interface SimulationConfigFormProps {
   onStartSimulation: (config: SimulationConfig, requestData: SimulationRequest) => void
@@ -34,6 +27,9 @@ export function SimulationConfigForm({ onStartSimulation }: SimulationConfigForm
   const [mantenimientosFile, setMantenimientosFile] = useState<File | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Get the setSimulationConfig action from the store
+  const setSimulationConfig = useAppStore((state) => state.setSimulationConfig);
 
   const handleEscenarioChange = (value: string) => {
     const escenarioValue = value as 'semanal' | 'colapso'
@@ -87,6 +83,9 @@ export function SimulationConfigForm({ onStartSimulation }: SimulationConfigForm
         ...(fileIdAverias && { fileIdAverias }),
         ...(fileIdMantenimientos && { fileIdMantenimientos }),
       };
+      
+      // Save the config to the global store
+      setSimulationConfig(config);
 
       onStartSimulation(config, requestData);
 

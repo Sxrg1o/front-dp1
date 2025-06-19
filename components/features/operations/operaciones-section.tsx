@@ -1,10 +1,26 @@
+"use client"
+
+import { useEffect } from "react"
+import { useAppStore } from "@/store/appStore"
+import { OperationsView } from "./views/OperationsView"
+
 export function OperacionesSection() {
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Operaciones</h1>
-      <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
-        <p className="text-gray-500 text-lg">Esta sección está en desarrollo</p>
-      </div>
-    </div>
-  )
+  // Inicializar configuración para modo operacional
+  const { setSimulationConfig, setSimulationId } = useAppStore();
+
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Configurar el store para modo operacional en tiempo real
+    setSimulationConfig({
+      escenario: 'semanal',
+      fechaInicio: today,
+    });
+    
+    // Usar un ID especial para modo operacional
+    setSimulationId('operations-live');
+  }, [setSimulationConfig, setSimulationId]);
+
+  // Renderizar la vista de operaciones
+  return <OperationsView />
 }

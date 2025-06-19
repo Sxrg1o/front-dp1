@@ -5,10 +5,14 @@ import { SimulationConfigForm } from "./views/SimulationConfigForm"
 import { SimulationView } from "./views/SimulationView"
 import { iniciarNuevaSimulacion } from "../../../services/simulacion-service"
 import { SimulationRequest, SimulationConfig, SimulationStatusDTO } from "../../../types/types";
+import { useAppStore } from "@/store/appStore" // Import the store
 
 export function SimulacionSection() {
   const [simulationConfig, setSimulationConfig] = useState<SimulationConfig | null>(null)
   const [activeSimulationId, setActiveSimulationId] = useState<string | null>(null)
+  
+  // Get the setSimulationId action from the store
+  const setSimulationId = useAppStore((state) => state.setSimulationId);
 
   const handleStartSimulation = async (config: SimulationConfig, requestData: SimulationRequest) => {
     try {
@@ -17,6 +21,9 @@ export function SimulacionSection() {
       if (status && status.simulationId) {
         setSimulationConfig(config);
         setActiveSimulationId(status.simulationId);
+        
+        // Save the simulation ID to the global store
+        setSimulationId(status.simulationId);
       } else {
         console.error("No se recibió un ID de simulación del backend.");
       }
@@ -32,7 +39,8 @@ export function SimulacionSection() {
       {!hasActiveSolution ? (
         <SimulationConfigForm onStartSimulation={handleStartSimulation} />
       ) : (
-        simulationConfig && activeSimulationId && <SimulationView config={simulationConfig} simulationId={activeSimulationId} />
+        // El nuevo componente SimulationView solo necesita el simulationId
+        activeSimulationId && <SimulationView simulationId={activeSimulationId} />
       )}
     </>
   )

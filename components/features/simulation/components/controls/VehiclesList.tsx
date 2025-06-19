@@ -6,19 +6,27 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { TabsContent } from "@/components/ui/tabs"
+import { useAppStore } from "@/store/appStore" // Importar el store global
 
-interface VehiclesListProps {
-  camiones: TruckDTO[]
-}
-
-export function VehiclesList({ camiones }: VehiclesListProps) {
+export function VehiclesList() {
   const [searchVehicle, setSearchVehicle] = useState("")
+  
+  // Obtener el modo actual
+  const mode = useAppStore((state) => state.mode);
+  
+  // Obtener los camiones según el modo
+  const camiones = useAppStore((state) => 
+    mode === 'simulation' 
+      ? state.simulationData.camiones 
+      : state.operationalData.camiones
+  )
 
   const getStatusBadge = (status: string) => {
     const variants = {
       AVAILABLE: "default",
       DELIVERING: "secondary",
       RETURNING: "destructive",
+      PROCESSING: "outline",  // Nuevo estado con variante outline
     } as const
 
     return <Badge variant={variants[status as keyof typeof variants] || "default"}>{status}</Badge>

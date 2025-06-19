@@ -1,13 +1,23 @@
 import { TruckDTO } from "@/types/types"
 import { Truck } from "lucide-react"
+import { useAppStore } from "@/store/appStore" // Importar el store global
 
 interface TruckLayerProps {
-  camiones: TruckDTO[]
   GRID_SIZE: number
   onTruckClick: (truck: TruckDTO) => void
 }
 
-export function TruckLayer({ camiones, GRID_SIZE, onTruckClick }: TruckLayerProps) {
+export function TruckLayer({ GRID_SIZE, onTruckClick }: TruckLayerProps) {
+  // Obtener el modo actual
+  const mode = useAppStore((state) => state.mode);
+  
+  // Obtener los camiones según el modo
+  const camiones = useAppStore((state) => 
+    mode === 'simulation' 
+      ? state.simulationData.camiones 
+      : state.operationalData.camiones
+  )
+
   const getTruckColorClass = (color: string) => {
     const colorMap = {
       green: "text-green-600",

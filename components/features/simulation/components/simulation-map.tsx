@@ -7,34 +7,15 @@ import { ZoomIn, ZoomOut } from "lucide-react"
 import { useMapInteraction } from "@/hooks/use-map-interaction"
 import { TruckLayer, TankLayer, OrderLayer, BlockageLayer } from "./map/layers"
 import { TruckModal, TankModal, BreakdownModal, OrderModal, useMapModals } from "./map/modals"
-import { 
-  PedidoDTO, 
-  TruckDTO, 
-  TanqueDTO, 
-  BloqueoDTO 
-} from "@/types/types"
-
-interface SimulationMapProps {
-  pedidos: PedidoDTO[]
-  camiones: TruckDTO[]
-  tanques: TanqueDTO[]
-  bloqueos: BloqueoDTO[]
-  tiempoActual: number
-  isRunning: boolean
-  isPaused?: boolean
-}
+import { useAppStore } from "@/store/appStore" // Importar el store global
 
 const BASE_GRID_SIZE = 15 
 const GRID_COLS = 70 
 const GRID_ROWS = 50
 
-export function SimulationMap({ 
-  pedidos, 
-  camiones, 
-  tanques, 
-  bloqueos, 
-  tiempoActual
-}: SimulationMapProps) {
+export function SimulationMap() {
+  // Obtener el tiempo actual directamente del store global para pasarlo a los modales
+  const tiempoActual = useAppStore((state) => state.simulation.tiempoActual)
   
   const {
     zoomLevel, panOffset, GRID_SIZE, mapWidth, mapHeight, mapContainerRef,
@@ -118,27 +99,22 @@ export function SimulationMap({
 
               {/* Map Layers */}
               <BlockageLayer 
-                bloqueos={bloqueos}
-                tiempoActual={tiempoActual}
                 GRID_SIZE={GRID_SIZE}
                 GRID_COLS={GRID_COLS}
                 GRID_ROWS={GRID_ROWS}
               />
               
               <OrderLayer 
-                pedidos={pedidos}
                 GRID_SIZE={GRID_SIZE}
                 onOrderClick={handleOrderClick}
               />
               
               <TankLayer 
-                tanques={tanques}
                 GRID_SIZE={GRID_SIZE}
                 onTankClick={handleTankClick}
               />
               
               <TruckLayer 
-                camiones={camiones}
                 GRID_SIZE={GRID_SIZE}
                 onTruckClick={handleTruckClick}
               />

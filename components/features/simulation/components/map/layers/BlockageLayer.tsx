@@ -1,20 +1,32 @@
 import type { BloqueoDTO } from "@/types/types"
+import { useAppStore } from "@/store/appStore" // Importar el store global
 
 interface BlockageLayerProps {
-  bloqueos: BloqueoDTO[]
-  tiempoActual: number
   GRID_SIZE: number
   GRID_COLS: number
   GRID_ROWS: number
 }
 
 export function BlockageLayer({ 
-  bloqueos, 
-  tiempoActual, 
   GRID_SIZE, 
   GRID_COLS, 
   GRID_ROWS 
 }: BlockageLayerProps) {
+  // Obtener el modo actual
+  const mode = useAppStore((state) => state.mode);
+  
+  // Obtener los datos según el modo
+  const bloqueos = useAppStore((state) => 
+    mode === 'simulation' 
+      ? state.simulationData.bloqueos 
+      : state.operationalData.bloqueos
+  )
+  const tiempoActual = useAppStore((state) => 
+    mode === 'simulation' 
+      ? state.simulation.tiempoActual 
+      : state.operational.tiempoActual
+  )
+
   // Calculate active blockages based on current time
   const activeBlockages = bloqueos.filter(
     (b) => tiempoActual >= b.tiempoInicio && tiempoActual < b.tiempoFin

@@ -1,13 +1,23 @@
 import { Fuel } from "lucide-react"
 import type { TanqueDTO } from "@/types/types"
+import { useAppStore } from "@/store/appStore" // Importar el store global
 
 interface TankLayerProps {
-  tanques: TanqueDTO[]
   GRID_SIZE: number
   onTankClick: (tank: TanqueDTO) => void
 }
 
-export function TankLayer({ tanques, GRID_SIZE, onTankClick }: TankLayerProps) {
+export function TankLayer({ GRID_SIZE, onTankClick }: TankLayerProps) {
+  // Obtener el modo actual
+  const mode = useAppStore((state) => state.mode);
+  
+  // Obtener los tanques según el modo
+  const tanques = useAppStore((state) => 
+    mode === 'simulation' 
+      ? state.simulationData.tanques 
+      : state.operationalData.tanques
+  )
+
   return (
     <>
       {tanques.map((station: TanqueDTO, index: number) => (
