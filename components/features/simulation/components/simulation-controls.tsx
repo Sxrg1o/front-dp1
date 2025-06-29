@@ -17,7 +17,7 @@ export function SimulationControls() {
   )
   
   // Obtener acciones del store global
-  const { startSimulation, pauseSimulation, stopSimulation, stepForward } = useAppStore()
+  const { startSimulation, pauseSimulation, stopSimulation, stepForward , addBreakdown } = useAppStore()
   
   // Determinar si la simulación está en ejecución o pausada
   const isRunning = playbackStatus === 'running'
@@ -32,6 +32,12 @@ export function SimulationControls() {
         onPause={pauseSimulation}
         onStop={stopSimulation}
         onStepForward={stepForward}
+        onAddBreakdown={(codigoVehiculo, tipoIncidente) => 
+          addBreakdown({
+            codigoVehiculo,
+            tipoIncidente
+          })
+        }
       />
 
       <CardContent className="p-0">

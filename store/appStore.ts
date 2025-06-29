@@ -6,7 +6,7 @@ import {
   AppStore,
   PlaybackStatus,
 } from '@/types/store';
-import { SimulacionSnapshotDTO, SimulationConfig } from '@/types/types'; // Corregida importación de SimulationConfig
+import { AveriaDTO, SimulacionSnapshotDTO, SimulationConfig } from '@/types/types'; // Corregida importación de SimulationConfig
 import { useEffect } from 'react'; // Añadida importación de useEffect
 import {
   avanzarUnMinuto,
@@ -14,6 +14,8 @@ import {
   avanzarMultiplesMinutos,
   obtenerSnapshot
 } from '@/services/simulacion-service';
+
+import { averiasService } from '@/services/averias-service';
 
 // Estado inicial de la aplicación
 const initialState: AppState = {
@@ -42,13 +44,15 @@ const initialState: AppState = {
     pedidos: [],
     camiones: [],
     tanques: [],
-    bloqueos: []
+    bloqueos: [],
+    averias: []
   },
   operationalData: {
     pedidos: [],
     camiones: [],
     tanques: [],
-    bloqueos: []
+    bloqueos: [],
+    averias: []
   },
   ui: {
     selectedEntityId: null,
@@ -395,7 +399,32 @@ export const useAppStore = create<AppStore>((set, get) => ({
       setLoading(false);
     }
   },
-
+  addBreakdown: async (averia: Omit<AveriaDTO, 'turno'>) => {
+    const { simulation, setLoading, setError } = get();
+    
+    if (!simulation.simulationId) {
+      console.error("No hay una simulación activa");
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await averiasService.createBr(averia);
+      set((state) => ({
+        simulationData: {
+          ...state.simulationData,
+          averias: [...state.simulationData.averias, response]
+        }
+      }));
+    } catch (error) {
+      console.error("❌ Error al declarar avería:", error);
+      setError("Error al declarar avería");
+    } finally {
+      setLoading(false);
+    }
+  },
   // Ya definido arriba
   // setMode: (mode) => set(() => ({ mode })),
 }));
