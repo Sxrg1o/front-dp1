@@ -72,6 +72,12 @@ export interface BloqueoDTO {
   nodes: { x: number; y: number }[]
 }
 
+export interface AveriaDTO {
+    turno: string;           
+    codigoVehiculo: string; 
+    tipoIncidente: string; 
+}
+
 export interface SimulacionSnapshotDTO {
   tiempoActual: number
   camiones: TruckDTO[]

@@ -4,6 +4,7 @@ import {
   TruckDTO, 
   TanqueDTO, 
   BloqueoDTO,
+  AveriaDTO,
   SimulacionSnapshotDTO,
   SimulationConfig
 } from './types';
@@ -32,6 +33,7 @@ export interface SimulationDataState {
   camiones: TruckDTO[];
   tanques: TanqueDTO[];
   bloqueos: BloqueoDTO[];
+  averias: AveriaDTO[];
 }
 
 // Estado de configuración de la UI
@@ -99,6 +101,7 @@ export interface APIActions {
   stopSimulation: () => Promise<void>;
   stepForward: () => Promise<void>;
   advanceMultipleSteps: (steps: number) => Promise<void>;
+  addBreakdown: (averia: Omit<AveriaDTO, 'turno'>) => void;
 }
 
 // Todas las acciones combinadas
