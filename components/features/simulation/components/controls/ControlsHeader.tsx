@@ -124,7 +124,8 @@ export function ControlsHeader({
           size="sm" 
           variant="outline" 
           onClick={() => onAddBreakdown(selectedVehicle, selectedIncident)}
-          disabled={isRunning && !isPaused || !selectedVehicle || !selectedIncident}
+          //disabled={isRunning && !isPaused || !selectedVehicle || !selectedIncident}
+          disabled={!selectedVehicle || !selectedIncident}
         >
           Agregar avería
         </Button>
@@ -133,7 +134,8 @@ export function ControlsHeader({
         <Select
           value={selectedVehicle}
           onValueChange={setSelectedVehicle}
-          disabled={isRunning && !isPaused}
+          //disabled={isRunning && !isPaused}
+          disabled={false}
         >
           
         <SelectTrigger className="w-32">
@@ -151,10 +153,11 @@ export function ControlsHeader({
         <Select
           value={selectedIncident}
           onValueChange={setSelectedIncident}
-          disabled={isRunning && !isPaused}
+          //disabled={isRunning && !isPaused}
+          disabled={false}
         >
           <SelectTrigger className="w-36">
-            <SelectValue placeholder="TipoIncidente" />
+            <SelectValue placeholder="Incidente" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="T1">T1</SelectItem>

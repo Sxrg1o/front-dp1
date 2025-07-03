@@ -12,8 +12,11 @@ import {
   avanzarUnMinuto,
   resetSimulacion,
   avanzarMultiplesMinutos,
-  obtenerSnapshot
+  obtenerSnapshot,
+  addAveriaSimulacion
 } from '@/services/simulacion-service';
+
+import api from '../lib/api-client';
 
 import { averiasService } from '@/services/averias-service';
 
@@ -399,32 +402,48 @@ export const useAppStore = create<AppStore>((set, get) => ({
       setLoading(false);
     }
   },
-  addBreakdown: async (averia: Omit<AveriaDTO, 'turno'>) => {
-    const { simulation, setLoading, setError } = get();
+addBreakdown: async (averia: Omit<AveriaDTO, 'turno'>) => {
+  const { simulation, setLoading, setError } = get();
+  
+  if (!simulation.simulationId) {
+    console.error("No hay una simulación activa");
+    return;
+  }
+  
+  setLoading(true);
+  setError(null);
+  
+  try {
+    const minutos = simulation.tiempoActual;
+    const minutosDelDia = minutos % 1440; // 1440 minutos = 24 horas
+    const turno = 
+      minutosDelDia < 480 ? 'T1' : // 480 minutos = 8 horas
+      minutosDelDia < 960 ? 'T2' : // 960 minutos = 16 horas
+      'T3';
     
-    if (!simulation.simulationId) {
-      console.error("No hay una simulación activa");
-      return;
-    }
+    // Crear el objeto con el turno
+    const averiaConTurno = {
+      ...averia,
+      turno
+    };
+
+    // Hacer la llamada al backend
+    const response = await api.post(`/simulacion/${simulation.simulationId}/averia`, averiaConTurno);
     
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await averiasService.createBr(averia);
-      set((state) => ({
-        simulationData: {
-          ...state.simulationData,
-          averias: [...state.simulationData.averias, response]
-        }
-      }));
-    } catch (error) {
-      console.error("❌ Error al declarar avería:", error);
-      setError("Error al declarar avería");
-    } finally {
-      setLoading(false);
-    }
-  },
+    // Actualizar el estado
+    set((state) => ({
+      simulationData: {
+        ...state.simulationData,
+        averias: [...state.simulationData.averias, response.data]
+      }
+    }));
+  } catch (error) {
+    console.error("❌ Error al declarar avería:", error);
+    setError("Error al declarar avería");
+  } finally {
+    setLoading(false);
+  }
+},
   // Ya definido arriba
   // setMode: (mode) => set(() => ({ mode })),
 }));
