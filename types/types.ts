@@ -72,6 +72,14 @@ export interface BloqueoDTO {
   nodes: { x: number; y: number }[]
 }
 
+// Interfaz para los datos de rutas asignadas a camiones
+export interface RutaDTO {
+  camionId: string
+  nodosRuta: { x: number; y: number }[]
+  pedidosIds: number[]
+  tiempoEstimado: number
+}
+
 export interface SimulacionSnapshotDTO {
   tiempoActual: number
   camiones: TruckDTO[]
@@ -82,9 +90,8 @@ export interface SimulacionSnapshotDTO {
 
 export interface SimulationRequest {
   nombreSimulacion: string;
-  fileIdPedidos: string;
-  fileIdBloqueos?: string; 
-  fileIdAverias?: string;
+  fechaInicio: string;
+  duracionDias: number;
 }
 
 export interface SimulationStatusDTO {

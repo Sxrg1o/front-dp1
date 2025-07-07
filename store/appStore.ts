@@ -12,7 +12,10 @@ import {
   avanzarUnMinuto,
   resetSimulacion,
   avanzarMultiplesMinutos,
-  obtenerSnapshot
+  obtenerSnapshot,
+  ejecutarSimulacion,
+  pausarSimulacion,
+  reanudarSimulacion
 } from '@/services/simulacion-service';
 
 // Estado inicial de la aplicación
@@ -295,10 +298,17 @@ export const useAppStore = create<AppStore>((set, get) => ({
     setError(null);
 
     try {
-      // Si es la primera vez o después de reiniciar, obtenemos un snapshot fresco
-      if (simulation.tiempoActual === 0) {
+      // Si es la primera vez o después de reiniciar, llamamos al endpoint /run
+      if (simulation.playbackStatus === 'idle') {
+        // Primero obtenemos un snapshot fresco
         const snapshot = await obtenerSnapshot(simulation.simulationId);
         updateSimulationFromSnapshot(snapshot);
+        
+        // Luego iniciamos la ejecución continua en el backend
+        await ejecutarSimulacion(simulation.simulationId);
+      } else if (simulation.playbackStatus === 'paused') {
+        // Si está pausada, llamamos al endpoint para reanudar
+        await reanudarSimulacion(simulation.simulationId);
       }
       
       setPlaybackStatus('running');
@@ -310,8 +320,20 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  pauseSimulation: () => {
-    get().setPlaybackStatus('paused');
+  pauseSimulation: async () => {
+    const { simulation, setPlaybackStatus, setError } = get();
+    
+    if (!simulation.simulationId || simulation.playbackStatus !== 'running') {
+      return;
+    }
+    
+    try {
+      await pausarSimulacion(simulation.simulationId);
+      setPlaybackStatus('paused');
+    } catch (error) {
+      console.error("❌ Error al pausar la simulación:", error);
+      setError("Error al pausar la simulación");
+    }
   },
 
   stopSimulation: async () => {
@@ -333,7 +355,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     setError(null);
 
     try {
+      // Reiniciamos la simulación en el backend
       await resetSimulacion(simulation.simulationId);
+      
+      // Obtenemos el estado inicial después del reset
       const snapshot = await obtenerSnapshot(simulation.simulationId);
       updateSimulationFromSnapshot(snapshot);
     } catch (error) {
@@ -428,7 +453,7 @@ export function useSimulationPolling() {
         setPlaybackStatus('idle');
         setError("Error durante la simulación automática");
       }
-    }, 1000); // 1 segundo entre pasos
+    }, 100); // 1 segundo entre pasos
 
     return () => clearInterval(interval);
   }, [
