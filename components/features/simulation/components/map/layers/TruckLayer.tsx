@@ -24,6 +24,7 @@ export function TruckLayer({ GRID_SIZE, onTruckClick }: TruckLayerProps) {
       yellow: "text-yellow-600", 
       blue: "text-blue-600",
       purple: "text-purple-600",
+      orange: "text-orange-600",
       gray: "text-gray-600"
     }
     return colorMap[color as keyof typeof colorMap] || "text-gray-600"
@@ -65,7 +66,7 @@ export function TruckLayer({ GRID_SIZE, onTruckClick }: TruckLayerProps) {
           title={`Camión ${truck.id} (${getTruckType(truck.id)})`}
         >
           <Truck
-            className={getTruckColorClass(getTruckColor(truck.id))}
+            className={getTruckColorClass(truck.status === "BREAKDOWN" ? "orange" : getTruckColor(truck.id))}
             size={Math.max(12, Math.min(32, GRID_SIZE - 2))}
           />
         </div>

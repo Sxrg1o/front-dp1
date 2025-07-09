@@ -168,7 +168,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
         pedidos: snapshot.pedidos || [],
         camiones: snapshot.camiones || [],
         tanques: tanquesDTO,
-        bloqueos: snapshot.bloqueos || []
+        bloqueos: snapshot.bloqueos || [],
+        averias: snapshot.averias || []
       }
     }));
 
@@ -218,7 +219,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
         pedidos: snapshot.pedidos || [],
         camiones: snapshot.camiones || [],
         tanques: tanquesDTO,
-        bloqueos: snapshot.bloqueos || []
+        bloqueos: snapshot.bloqueos || [],
+        averias: snapshot.averias || []
       }
     }));
 

@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAppStore } from "@/store/appStore" // Importar el store global
-import { ControlsHeader, VehiclesList, OrdersList, LegendView } from "./controls"
+import { ControlsHeader, VehiclesList, OrdersList, LegendView, BreakdownsList } from "./controls"
 
 export function SimulationControls() {
   // Obtener el modo actual
@@ -42,12 +42,15 @@ export function SimulationControls() {
 
       <CardContent className="p-0">
         <Tabs defaultValue="leyenda" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 rounded-none">
+          <TabsList className="grid w-full grid-cols-4 rounded-none">
             <TabsTrigger value="vehiculos" className="text-sm">
               VEHÍCULOS
             </TabsTrigger>
             <TabsTrigger value="pedidos" className="text-sm">
               PEDIDOS
+            </TabsTrigger>
+            <TabsTrigger value="averias" className="text-sm">
+              AVERÍAS
             </TabsTrigger>
             <TabsTrigger value="leyenda" className="text-sm">
               LEYENDA
@@ -55,6 +58,7 @@ export function SimulationControls() {
           </TabsList>
 
           <LegendView />
+          <BreakdownsList />
           <VehiclesList />
           <OrdersList />
         </Tabs>

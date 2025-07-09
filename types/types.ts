@@ -84,6 +84,7 @@ export interface SimulacionSnapshotDTO {
   pedidos: PedidoDTO[]
   tanques: TanqueDTO[]
   bloqueos: BloqueoDTO[]
+  averias: AveriaDTO[]
 }
 
 export interface SimulationRequest {
