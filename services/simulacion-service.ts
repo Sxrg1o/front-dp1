@@ -11,16 +11,9 @@ export type SimulationEventCallback = (data: any, eventType: SimulationEventType
 // Tipos de eventos WebSocket
 export enum SimulationEventType {
     SIMULATION_STARTED = 'SIMULATION_STARTED',
-    TANK_LEVEL_UPDATED = 'TANK_LEVEL_UPDATED',
-    TRUCK_STATE_UPDATED = 'TRUCK_STATE_UPDATED',
-    ORDER_STATE_UPDATED = 'ORDER_STATE_UPDATED',
     SIMULATION_COLLAPSED = 'SIMULATION_COLLAPSED',
-    ROUTE_ASSIGNED = 'ROUTE_ASSIGNED',
-    ORDER_CREATED = 'ORDER_CREATED',
-    TRUCK_POSITION_UPDATED = 'TRUCK_POSITION_UPDATED',
-    BLOCKAGE_STARTED = 'BLOCKAGE_STARTED',
-    BLOCKAGE_ENDED = 'BLOCKAGE_ENDED',
     SNAPSHOT = 'SNAPSHOT',
+    SIMULATION_COMPLETED = 'SIMULATION_COMPLETED'
 }
 
 export async function iniciarNuevaSimulacion(request: SimulationRequest): Promise<SimulationStatusDTO> {
@@ -162,5 +155,15 @@ export async function detenerSimulacion(simulationId: string): Promise<void> {
         await api.post(`/simulacion/${simulationId}/stop`);
     } catch (error) {
         throw new Error("Error al detener la simulación");
+    }
+}
+
+export async function haySimulacionActiva(): Promise<string> {
+    try {
+        const response = await api.get('/simulacion/active');
+        return response.data;
+    } catch (error) {
+        console.error("Error al verificar simulación activa:", error);
+        return "false"; 
     }
 }
