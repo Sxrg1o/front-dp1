@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAppStore } from "@/store/appStore" // Importar el store global
-import { ControlsHeader, VehiclesList, OrdersList, LegendView } from "./controls"
+import { ControlsHeader, VehiclesList, OrdersList, LegendView, TanksList } from "./controls"
 import { modifySpeed } from "@/services/simulacion-service" // Importar función de cambio de velocidad
 
 export function SimulationControls() {
@@ -48,9 +48,12 @@ export function SimulationControls() {
 
       <CardContent className="p-0">
         <Tabs defaultValue="leyenda" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 rounded-none">
+          <TabsList className="grid w-full grid-cols-4 rounded-none">
             <TabsTrigger value="vehiculos" className="text-sm">
               VEHÍCULOS
+            </TabsTrigger>
+            <TabsTrigger value="tanques" className="text-sm">
+              TANQUES
             </TabsTrigger>
             <TabsTrigger value="pedidos" className="text-sm">
               PEDIDOS
@@ -63,6 +66,7 @@ export function SimulationControls() {
           <LegendView />
           <VehiclesList />
           <OrdersList />
+          <TanksList />
         </Tabs>
       </CardContent>
     </Card>

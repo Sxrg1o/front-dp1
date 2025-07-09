@@ -19,8 +19,13 @@ export function OrderModal({
 }: OrderModalProps) {
   if (!order) return null
 
-  // Calcular tiempo restante
-  const tiempoRestante = order.tiempoLimite - tiempoActual
+  const fechaActual = new Date(tiempoActual);
+  const fechaLimite = new Date(order.tiempoLimite);
+
+  const tiempoRestante = !isNaN(fechaActual.getTime()) && !isNaN(fechaLimite.getTime())
+    ? Math.floor((fechaLimite.getTime() - fechaActual.getTime()) / (1000 * 60))
+    : 0;
+  
   const estaVencido = tiempoRestante <= 0
 
   return (

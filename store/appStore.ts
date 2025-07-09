@@ -134,7 +134,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
           capacidadDisponible: t.capacidadDisponible,
         }))
       : [];
-
+    
     set((state) => ({
       simulation: {
         ...state.simulation,
@@ -149,25 +149,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
       }
     }));
 
-    // Detectar eventos para la simulación
-    if (snapshot.pedidos) {
-      snapshot.pedidos.forEach((p) => {
-        if (p.tiempoCreacion === snapshot.tiempoActual) {
-          console.log(
-            `🆕 Pedido ${p.id} recibido en (${p.x}, ${p.y}), ` +
-            `volumen=${p.volumen} m³, límite t+${p.tiempoLimite}`
-          );
-        }
-      });
-    }
-
-    if (snapshot.bloqueos) {
-      snapshot.bloqueos.forEach((b) => {
-        if (b.tiempoInicio === snapshot.tiempoActual) {
-          console.log(`⛔ Bloqueo ${b.id} comienza en t+${b.tiempoInicio}`);
-        }
-      });
-    }
   },
 
   updateOperationalFromSnapshot: (snapshot) => {
@@ -199,25 +180,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       }
     }));
 
-    // Detectar eventos (esto podría moverse a un middleware o acción específica)
-    if (snapshot.pedidos) {
-      snapshot.pedidos.forEach((p) => {
-        if (p.tiempoCreacion === snapshot.tiempoActual) {
-          console.log(
-            `🆕 Pedido ${p.id} recibido en (${p.x}, ${p.y}), ` +
-            `volumen=${p.volumen} m³, límite t+${p.tiempoLimite}`
-          );
-        }
-      });
-    }
 
-    if (snapshot.bloqueos) {
-      snapshot.bloqueos.forEach((b) => {
-        if (b.tiempoInicio === snapshot.tiempoActual) {
-          console.log(`⛔ Bloqueo ${b.id} comienza en t+${b.tiempoInicio}`);
-        }
-      });
-    }
   },
 
   // Acciones de UI
