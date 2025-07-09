@@ -1,6 +1,6 @@
 import { TruckDTO } from "@/types/types"
 import { Truck } from "lucide-react"
-import { useAppStore } from "@/store/appStore" // Importar el store global
+import { useAppStore } from "@/store/appStore" 
 
 interface TruckLayerProps {
   GRID_SIZE: number

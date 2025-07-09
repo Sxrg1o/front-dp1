@@ -1,4 +1,4 @@
-import { SimulacionSnapshotDTO, SimulationStatusDTO, SimulationRequest, TanqueDTO, TruckDTO, PedidoDTO } from '../types/types';
+import { SimulacionSnapshotDTO, SimulationStatusDTO, SimulationRequest, SpeedRequest } from '../types/types';
 import api from '../lib/api-client';
 import { Client } from '@stomp/stompjs';
 
@@ -20,6 +20,7 @@ export enum SimulationEventType {
     TRUCK_POSITION_UPDATED = 'TRUCK_POSITION_UPDATED',
     BLOCKAGE_STARTED = 'BLOCKAGE_STARTED',
     BLOCKAGE_ENDED = 'BLOCKAGE_ENDED',
+    SNAPSHOT = 'SNAPSHOT',
 }
 
 export async function iniciarNuevaSimulacion(request: SimulationRequest): Promise<SimulationStatusDTO> {
@@ -49,14 +50,6 @@ export async function avanzarUnMinuto(simulationId: string): Promise<SimulacionS
         return response.data;
     } catch (error) {
         throw new Error("Error al avanzar un minuto de simulación")
-    }
-}
-
-export async function resetSimulacion(simulationId: string): Promise<void> {
-    try {
-        await api.post(`/simulacion/${simulationId}/reset`)
-    } catch (error) {
-        throw new Error("Error al resetear la simulación")
     }
 }
 
@@ -139,19 +132,35 @@ export function disconnectWebSocket(): void {
 }
 
 // Función para pausar la simulación
-export async function pausarSimulacion(simulationId: string): Promise<void> {
+export async function pausarSimulacion(): Promise<void> {
     try {
-        await api.post(`/simulacion/${simulationId}/pause`);
+        await api.post(`/simulacion/pause`);
     } catch (error) {
         throw new Error("Error al pausar la simulación");
     }
 }
 
 // Función para reanudar una simulación pausada
-export async function reanudarSimulacion(simulationId: string): Promise<void> {
+export async function reanudarSimulacion(): Promise<void> {
     try {
-        await api.post(`/simulacion/${simulationId}/resume`);
+        await api.post(`/simulacion/resume`);
     } catch (error) {
         throw new Error("Error al reanudar la simulación");
+    }
+}
+
+export async function modifySpeed(speedRequest: SpeedRequest): Promise<void> {
+    try {
+        await api.post(`/simulacion/speed`, speedRequest);
+    } catch (error) {
+        throw new Error("Error al modificar la velocidad de la simulación");
+    }
+}
+
+export async function detenerSimulacion(simulationId: string): Promise<void> {
+    try {
+        await api.post(`/simulacion/${simulationId}/stop`);
+    } catch (error) {
+        throw new Error("Error al detener la simulación");
     }
 }

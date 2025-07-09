@@ -21,19 +21,9 @@ export function BlockageLayer({
       : state.operationalData.bloqueos
   );
 
-  // Obtiene la lista de IDs ACTIVOS
-  const activeBlockageIds = useAppStore((state) => 
-    mode === 'simulation' 
-      ? state.simulationData.activeBlockageIds 
-      : [] 
-  );
-
-  // Filtra la lista maestra para obtener solo los objetos de bloqueo activos
-  const activeBlockages = allBlockages.filter(b => activeBlockageIds.includes(b.id));
-
   return (
     <>
-      {activeBlockages.map((b) =>
+      {allBlockages.map((b) =>
         b.nodes.map((pt, idx) => (
           <div
             key={`${b.id}-${idx}`}
@@ -53,10 +43,10 @@ export function BlockageLayer({
         className="absolute top-0 left-0 w-full h-full pointer-events-none"
         style={{ width: `${GRID_SIZE * GRID_COLS}px`, height: `${GRID_SIZE * GRID_ROWS}px` }}
       >
-        {activeBlockages.map((b) =>
+        {allBlockages.map((b) =>
           b.nodes.slice(0, -1).map((pt, i) => {
-            const next = b.nodes?.[i + 1]; // Safe access in case of issues
-            if (!next) return null; // Avoid errors if next node doesn't exist
+            const next = b.nodes?.[i + 1]; 
+            if (!next) return null; 
             const x1 = pt.x * GRID_SIZE + GRID_SIZE / 2;
             const y1 = pt.y * GRID_SIZE + GRID_SIZE / 2;
             const x2 = next.x * GRID_SIZE + GRID_SIZE / 2;

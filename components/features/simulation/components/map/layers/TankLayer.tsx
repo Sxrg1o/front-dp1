@@ -1,6 +1,6 @@
 import { Fuel } from "lucide-react"
 import type { TanqueDTO } from "@/types/types"
-import { useAppStore } from "@/store/appStore" // Importar el store global
+import { useAppStore } from "@/store/appStore" 
 
 interface TankLayerProps {
   GRID_SIZE: number

@@ -2,20 +2,16 @@
 import { create } from 'zustand';
 import { 
   AppState, 
-  AppActions,
-  AppStore,
-  PlaybackStatus,
+  AppStore
 } from '@/types/store';
-import { SimulacionSnapshotDTO, SimulationConfig } from '@/types/types'; // Corregida importación de SimulationConfig
-import { useEffect } from 'react'; // Añadida importación de useEffect
 import {
   avanzarUnMinuto,
-  resetSimulacion,
   avanzarMultiplesMinutos,
   obtenerSnapshot,
   ejecutarSimulacion,
   pausarSimulacion,
-  reanudarSimulacion
+  reanudarSimulacion,
+  detenerSimulacion
 } from '@/services/simulacion-service';
 
 // Estado inicial de la aplicación
@@ -106,47 +102,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   // Acción para establecer el modo
   setMode: (mode) => set(() => ({ mode })),
-
-  // Acciones de datos para simulación
-  setSimulationPedidos: (updater) => set((state) => {
-    const prevPedidos = state.simulationData.pedidos;
-    const nuevosPedidos = typeof updater === 'function' ? updater(prevPedidos) : updater;
-    return {
-      simulationData: { ...state.simulationData, pedidos: nuevosPedidos }
-    };
-  }),
-
-  setSimulationCamiones: (updater) => set((state) => {
-    const prevCamiones = state.simulationData.camiones;
-    
-    // Si el updater es una función, la llamamos con el estado anterior.
-    // Si no, usamos el valor directamente (que sería el array).
-    const nuevosCamiones = typeof updater === 'function' ? updater(prevCamiones) : updater;
-    
-    return {
-      simulationData: { ...state.simulationData, camiones: nuevosCamiones }
-    };
-  }),
-
-  setSimulationTanques: (tanques) => set((state) => ({
-    simulationData: { ...state.simulationData, tanques }
-  })),
-
-  setSimulationBloqueos: (updater) => set((state) => {
-    const prevBloqueos = state.simulationData.bloqueos;
-    const nuevosBloqueos = typeof updater === 'function' ? updater(prevBloqueos) : updater;
-    return {
-      simulationData: { ...state.simulationData, bloqueos: nuevosBloqueos }
-    };
-  }),
-
-  setActiveBlockageIds: (updater) => set((state) => {
-    const prevIds = state.simulationData.activeBlockageIds;
-    const nuevosIds = typeof updater === 'function' ? updater(prevIds) : updater;
-    return {
-      simulationData: { ...state.simulationData, activeBlockageIds: nuevosIds }
-    };
-  }),
   
   // Acciones de datos para operaciones
   setOperationalPedidos: (pedidos) => set((state) => ({
@@ -312,8 +267,15 @@ export const useAppStore = create<AppStore>((set, get) => ({
       setPlaybackStatus, 
       setLoading, 
       setError, 
-      updateSimulationFromSnapshot
+      updateSimulationFromSnapshot,
+      pauseSimulation
     } = get();
+    
+    // Si está ejecutándose, entonces pausar (toggle)
+    if (simulation.playbackStatus === 'running') {
+      pauseSimulation();
+      return;
+    }
     
     if (!simulation.simulationId) {
       console.error("No hay un ID de simulación activo");
@@ -334,7 +296,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         await ejecutarSimulacion(simulation.simulationId);
       } else if (simulation.playbackStatus === 'paused') {
         // Si está pausada, llamamos al endpoint para reanudar
-        await reanudarSimulacion(simulation.simulationId);
+        await reanudarSimulacion();
       }
       
       setPlaybackStatus('running');
@@ -354,7 +316,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
     
     try {
-      await pausarSimulacion(simulation.simulationId);
+      await pausarSimulacion();
       setPlaybackStatus('paused');
     } catch (error) {
       console.error("❌ Error al pausar la simulación:", error);
@@ -368,7 +330,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
       setPlaybackStatus,
       setLoading,
       setError,
-      updateSimulationFromSnapshot,
     } = get();
 
     if (!simulation.simulationId) {
@@ -382,11 +343,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
     try {
       // Reiniciamos la simulación en el backend
-      await resetSimulacion(simulation.simulationId);
-      
-      // Obtenemos el estado inicial después del reset
-      const snapshot = await obtenerSnapshot(simulation.simulationId);
-      updateSimulationFromSnapshot(snapshot);
+      await detenerSimulacion(simulation.simulationId);
     } catch (error) {
       console.error("❌ Error al detener la simulación:", error);
       setError("Error al detener la simulación");

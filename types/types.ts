@@ -107,3 +107,7 @@ export interface SimulationConfig {
   fechaInicio: string;
   fechaFinal?: string;
 }
+
+export interface SpeedRequest {
+  delayMs: number;
+}

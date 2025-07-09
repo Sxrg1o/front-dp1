@@ -68,12 +68,6 @@ export interface SimulationActions {
 
 // Acciones para los datos de la simulación
 export interface DataActions {
-  // Acciones para datos de simulación
-  setSimulationPedidos: (updater: PedidoDTO[] | ((prevPedidos: PedidoDTO[]) => PedidoDTO[])) => void;
-  setSimulationCamiones: (updater: TruckDTO[] | ((prevCamiones: TruckDTO[]) => TruckDTO[])) => void;
-  setSimulationTanques: (tanques: TanqueDTO[]) => void;
-  setSimulationBloqueos: (updater: BloqueoDTO[] | ((prev: BloqueoDTO[]) => BloqueoDTO[])) => void;
-  setActiveBlockageIds: (updater: string[] | ((prev: string[]) => string[])) => void;
   updateSimulationFromSnapshot: (snapshot: SimulacionSnapshotDTO) => void;
   
   // Acciones para datos de operaciones

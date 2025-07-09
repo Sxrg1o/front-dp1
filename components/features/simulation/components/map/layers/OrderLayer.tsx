@@ -1,6 +1,6 @@
 import { MapPin } from "lucide-react"
 import type { PedidoDTO } from "@/types/types"
-import { useAppStore } from "@/store/appStore" // Importar el store global
+import { useAppStore } from "@/store/appStore"
 
 interface OrderLayerProps {
   GRID_SIZE: number
@@ -23,24 +23,24 @@ export function OrderLayer({ GRID_SIZE, onOrderClick }: OrderLayerProps) {
       {pedidos.map((p) => (
         <div
           key={`pedido-${p.id}`}
-          // Aplicamos una transición para el cambio de opacidad
           className="absolute z-10 flex items-center justify-center pointer-events-auto cursor-pointer transition-opacity duration-500"
           style={{
             top: `${p.y * GRID_SIZE + 1}px`,
             left: `${p.x * GRID_SIZE + 1}px`,
             width: `${GRID_SIZE}px`,
             height: `${GRID_SIZE}px`,
-            // Si el estado es 'delivered', lo hacemos semitransparente
             opacity: p.atendido ? 1 : 0.5,
           }}
           onClick={() => onOrderClick(p)}
           title={`Pedido ${p.idCliente}`}
         >
-          <MapPin 
-            // También puedes cambiar el color
-            className={p.atendido ? "text-green-600" : "text-red-600"}
-            size={Math.max(12, Math.min(32, GRID_SIZE - 2))} 
-          />
+          {!p.atendido && (
+            <MapPin 
+              // También puedes cambiar el color
+              className={"text-red-600"}
+              size={Math.max(12, Math.min(32, GRID_SIZE - 2))} 
+            />
+          )}
         </div>
       ))}
     </>

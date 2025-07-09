@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAppStore } from "@/store/appStore" // Importar el store global
 import { ControlsHeader, VehiclesList, OrdersList, LegendView } from "./controls"
+import { modifySpeed } from "@/services/simulacion-service" // Importar función de cambio de velocidad
 
 export function SimulationControls() {
   // Obtener el modo actual
@@ -23,6 +24,16 @@ export function SimulationControls() {
   const isRunning = playbackStatus === 'running'
   const isPaused = playbackStatus === 'paused'
 
+  // Manejar el cambio de velocidad
+  const handleSpeedChange = async (speed: number) => {
+    try {
+      await modifySpeed({ delayMs: speed });
+      console.log(`Velocidad cambiada a ${speed}ms`);
+    } catch (error) {
+      console.error("Error al cambiar la velocidad:", error);
+    }
+  };
+
   return (
     <Card className="h-lv py-0 gap-0">
       <ControlsHeader
@@ -32,6 +43,7 @@ export function SimulationControls() {
         onPause={pauseSimulation}
         onStop={stopSimulation}
         onStepForward={stepForward}
+        onSpeedChange={handleSpeedChange}
       />
 
       <CardContent className="p-0">
