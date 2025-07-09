@@ -45,13 +45,15 @@ const initialState: AppState = {
     pedidos: [],
     camiones: [],
     tanques: [],
-    bloqueos: []
+    bloqueos: [],
+    activeBlockageIds: [] 
   },
   operationalData: {
     pedidos: [],
     camiones: [],
     tanques: [],
-    bloqueos: []
+    bloqueos: [],
+    activeBlockageIds: []
   },
   ui: {
     selectedEntityId: null,
@@ -106,21 +108,45 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setMode: (mode) => set(() => ({ mode })),
 
   // Acciones de datos para simulación
-  setSimulationPedidos: (pedidos) => set((state) => ({
-    simulationData: { ...state.simulationData, pedidos }
-  })),
+  setSimulationPedidos: (updater) => set((state) => {
+    const prevPedidos = state.simulationData.pedidos;
+    const nuevosPedidos = typeof updater === 'function' ? updater(prevPedidos) : updater;
+    return {
+      simulationData: { ...state.simulationData, pedidos: nuevosPedidos }
+    };
+  }),
 
-  setSimulationCamiones: (camiones) => set((state) => ({
-    simulationData: { ...state.simulationData, camiones }
-  })),
+  setSimulationCamiones: (updater) => set((state) => {
+    const prevCamiones = state.simulationData.camiones;
+    
+    // Si el updater es una función, la llamamos con el estado anterior.
+    // Si no, usamos el valor directamente (que sería el array).
+    const nuevosCamiones = typeof updater === 'function' ? updater(prevCamiones) : updater;
+    
+    return {
+      simulationData: { ...state.simulationData, camiones: nuevosCamiones }
+    };
+  }),
 
   setSimulationTanques: (tanques) => set((state) => ({
     simulationData: { ...state.simulationData, tanques }
   })),
 
-  setSimulationBloqueos: (bloqueos) => set((state) => ({
-    simulationData: { ...state.simulationData, bloqueos }
-  })),
+  setSimulationBloqueos: (updater) => set((state) => {
+    const prevBloqueos = state.simulationData.bloqueos;
+    const nuevosBloqueos = typeof updater === 'function' ? updater(prevBloqueos) : updater;
+    return {
+      simulationData: { ...state.simulationData, bloqueos: nuevosBloqueos }
+    };
+  }),
+
+  setActiveBlockageIds: (updater) => set((state) => {
+    const prevIds = state.simulationData.activeBlockageIds;
+    const nuevosIds = typeof updater === 'function' ? updater(prevIds) : updater;
+    return {
+      simulationData: { ...state.simulationData, activeBlockageIds: nuevosIds }
+    };
+  }),
   
   // Acciones de datos para operaciones
   setOperationalPedidos: (pedidos) => set((state) => ({
@@ -424,43 +450,3 @@ export const useAppStore = create<AppStore>((set, get) => ({
   // Ya definido arriba
   // setMode: (mode) => set(() => ({ mode })),
 }));
-
-// Hook personalizado para el polling de la simulación
-export function useSimulationPolling() {
-  const { 
-    simulation,
-    updateSimulationFromSnapshot,
-    setPlaybackStatus,
-    setError
-  } = useAppStore();
-
-  useEffect(() => {
-    // Si no está en marcha o está pausado, no hacemos nada
-    if (
-      simulation.playbackStatus !== 'running' || 
-      !simulation.simulationId
-    ) {
-      return;
-    }
-
-    const interval = setInterval(async () => {
-      try {
-        const snapshot = await avanzarUnMinuto(simulation.simulationId!);
-        updateSimulationFromSnapshot(snapshot);
-      } catch (error) {
-        console.error("❌ Falló el paso de simulación:", error);
-        clearInterval(interval);
-        setPlaybackStatus('idle');
-        setError("Error durante la simulación automática");
-      }
-    }, 100); // 1 segundo entre pasos
-
-    return () => clearInterval(interval);
-  }, [
-    simulation.playbackStatus,
-    simulation.simulationId,
-    updateSimulationFromSnapshot,
-    setPlaybackStatus,
-    setError
-  ]);
-}

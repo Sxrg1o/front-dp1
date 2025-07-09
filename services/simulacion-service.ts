@@ -15,7 +15,11 @@ export enum SimulationEventType {
     TRUCK_STATE_UPDATED = 'TRUCK_STATE_UPDATED',
     ORDER_STATE_UPDATED = 'ORDER_STATE_UPDATED',
     SIMULATION_COLLAPSED = 'SIMULATION_COLLAPSED',
-    ROUTE_ASSIGNED = 'ROUTE_ASSIGNED'
+    ROUTE_ASSIGNED = 'ROUTE_ASSIGNED',
+    ORDER_CREATED = 'ORDER_CREATED',
+    TRUCK_POSITION_UPDATED = 'TRUCK_POSITION_UPDATED',
+    BLOCKAGE_STARTED = 'BLOCKAGE_STARTED',
+    BLOCKAGE_ENDED = 'BLOCKAGE_ENDED',
 }
 
 export async function iniciarNuevaSimulacion(request: SimulationRequest): Promise<SimulationStatusDTO> {
@@ -80,7 +84,7 @@ export function connectWebSocket(simulationId: string, callback: SimulationEvent
     }
 
     stompClient = new Client({
-        brokerURL: `ws://localhost:8080/ws-connect`,
+        brokerURL: `http://localhost:8080/ws-connect`,
         debug: function (str) {
             console.log('STOMP: ' + str);
         },
@@ -95,8 +99,9 @@ export function connectWebSocket(simulationId: string, callback: SimulationEvent
         // Suscribirse a los diferentes eventos de la simulación
         const subscription = stompClient!.subscribe(`/topic/simulation/${simulationId}`, (message) => {
             try {
-                const payload = JSON.parse(message.body);
-                const eventType = message.headers['eventType'] as SimulationEventType;
+                const eventDTO = JSON.parse(message.body);
+                const eventType = eventDTO.type as SimulationEventType;
+                const payload = eventDTO.payload;
                 
                 // Llamar al callback con los datos y tipo de evento
                 callback(payload, eventType);

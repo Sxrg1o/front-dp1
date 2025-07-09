@@ -11,7 +11,7 @@ import {
   SimulationEventType,
   SimulationEventCallback
 } from '@/services/simulacion-service';
-import { TanqueDTO, TruckDTO, PedidoDTO, RutaDTO } from '@/types/types';
+import { TanqueDTO, TruckDTO, PedidoDTO, RutaDTO, BloqueoDTO } from '@/types/types';
 
 /**
  * Hook para gestionar el ciclo de vida de la simulación
@@ -43,7 +43,9 @@ export function useSimulationRunner(simulationId: string) {
     // Acciones específicas para actualizaciones parciales
     setSimulationTanques,
     setSimulationCamiones,
-    setSimulationPedidos
+    setSimulationPedidos,
+    setSimulationBloqueos,
+    setActiveBlockageIds
   } = useAppStore();
   
   // Asegurarnos de que el ID de simulación esté configurado en el store
@@ -60,18 +62,28 @@ export function useSimulationRunner(simulationId: string) {
   }, [simulationData.tanques, setSimulationTanques]);
 
   const updateCamion = useCallback((camionDTO: TruckDTO) => {
-    const updatedCamiones = simulationData.camiones.map(camion => 
-      camion.id === camionDTO.id ? camionDTO : camion
+    setSimulationCamiones(prevCamiones => 
+      prevCamiones.map(camion =>
+        camion.id === camionDTO.id ? camionDTO : camion
+      )
     );
-    setSimulationCamiones(updatedCamiones);
-  }, [simulationData.camiones, setSimulationCamiones]);
+  }, [setSimulationCamiones]);
 
   const updatePedido = useCallback((pedidoDTO: PedidoDTO) => {
-    const updatedPedidos = simulationData.pedidos.map(pedido => 
-      pedido.id === pedidoDTO.id ? pedidoDTO : pedido
-    );
-    setSimulationPedidos(updatedPedidos);
-  }, [simulationData.pedidos, setSimulationPedidos]);
+    // Esta función que ya tienes para añadir/actualizar pedidos es perfecta.
+    // Solo asegúrate de que tu tipo PedidoDTO en el frontend pueda tener
+    // una propiedad opcional como "status".
+    setSimulationPedidos(prevPedidos => {
+      const existingIndex = prevPedidos.findIndex(p => p.id === pedidoDTO.id);
+      if (existingIndex !== -1) {
+        const newPedidos = [...prevPedidos];
+        newPedidos[existingIndex] = { ...newPedidos[existingIndex], ...pedidoDTO };
+        return newPedidos;
+      } else {
+        return [...prevPedidos, pedidoDTO];
+      }
+    });
+  }, [setSimulationPedidos]);
 
   const updateRuta = useCallback((rutaDTO: RutaDTO) => {
     // Aquí se actualizaría la ruta específica del camión
@@ -104,11 +116,24 @@ export function useSimulationRunner(simulationId: string) {
           updateCamion(data as TruckDTO);
         }
         break;
-      
+            
       case SimulationEventType.ORDER_STATE_UPDATED:
-        // Actualizar pedido específico
         if (data) {
-          updatePedido(data as PedidoDTO);
+          const deliveredOrder = data as PedidoDTO;
+          
+          // 1. Marca el pedido como 'entregado' para cambiar su estilo visual.
+          setSimulationPedidos(prevPedidos => 
+            prevPedidos.map(p => 
+              p.id === deliveredOrder.id ? { ...p, atendido: true, status: 'delivered' } : p
+            )
+          );
+
+          // 2. Después de un retraso, elimínalo de la lista para que desaparezca.
+          setTimeout(() => {
+            setSimulationPedidos(prevPedidos => 
+              prevPedidos.filter(p => p.id !== deliveredOrder.id)
+            );
+          }, 500); 
         }
         break;
       
@@ -129,10 +154,45 @@ export function useSimulationRunner(simulationId: string) {
         }
         break;
       
+      case SimulationEventType.ORDER_CREATED:
+        if(data) {
+          updatePedido(data as PedidoDTO);
+        }
+        break;
+
+      case SimulationEventType.TRUCK_POSITION_UPDATED:
+        if(data) {
+          updateCamion(data as TruckDTO);
+        }
+        break;
+      
+      case SimulationEventType.BLOCKAGE_STARTED:
+        if (data) {
+          const newBlockage = data as BloqueoDTO;
+
+          setActiveBlockageIds(prevIds =>
+            prevIds.includes(newBlockage.id) ? prevIds : [...prevIds, newBlockage.id]
+          );
+
+          setSimulationBloqueos(prevBloqueos => {
+            const exists = prevBloqueos.some(b => b.id === newBlockage.id);
+            return exists ? prevBloqueos : [...prevBloqueos, newBlockage];
+          });
+        }
+        break;
+        
+      case SimulationEventType.BLOCKAGE_ENDED:
+        if (data) {
+          // QUITA el ID de la lista de activos
+          const endedBlockageId = (data as BloqueoDTO).id;
+          setActiveBlockageIds(prevIds => prevIds.filter(id => id !== endedBlockageId));
+        }
+        break;
+
       default:
         console.warn(`Tipo de evento no manejado: ${eventType}`);
     }
-  }, [setPlaybackStatus, setError, updateTanque, updateCamion, updatePedido, updateRuta]);
+  }, [setPlaybackStatus, setError, updateTanque, updateCamion, updatePedido, updateRuta, setSimulationBloqueos, setActiveBlockageIds]);
 
   // Función para cargar el snapshot inicial
   const loadInitialSnapshot = useCallback(async () => {
