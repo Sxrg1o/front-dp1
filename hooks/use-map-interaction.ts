@@ -32,7 +32,7 @@ export function useMapInteraction({
   initialZoom = 100,
   minZoom = 25,
   maxZoom = 300,
-  zoomStep = 25,
+  zoomStep = 10,//25
   gridCols,
   gridRows,
   baseGridSize
@@ -41,61 +41,56 @@ export function useMapInteraction({
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  const mapContainerRef = useRef<HTMLDivElement>(null)
-
+  const mapContainerRef = useRef<HTMLDivElement | null>(null)
+  const isDraggingRef = useRef(false)
+  const dragStartRef = useRef({ x: 0, y: 0 })
   const throttleRef = useRef<number | null>(null)
-  const wheelThrottleRef = useRef<number | null>(null)
-  const wheelDebounceRef = useRef<number | null>(null)
+  const wheelThrottleRef = useRef<boolean>(false) 
 
   const GRID_SIZE = Math.round(baseGridSize * (zoomLevel / 100))
   const mapWidth = gridCols * GRID_SIZE
   const mapHeight = gridRows * GRID_SIZE
 
   const constrainPanOffset = useCallback((offset: { x: number, y: number }) => {
-    if (!mapContainerRef.current) return offset
-    
-    const containerRect = mapContainerRef.current.getBoundingClientRect()
-    let newOffsetX = offset.x
-    let newOffsetY = offset.y
-  
+    if (!mapContainerRef.current) return offset;
+
+    const containerRect = mapContainerRef.current.getBoundingClientRect();
+    let newOffsetX = offset.x;
+    let newOffsetY = offset.y;
+
+    // Lógica para el eje X (horizontal)
     if (mapWidth > containerRect.width) {
-      const maxOffsetX = (mapWidth - containerRect.width) / 2
-      newOffsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, offset.x))
+      // Si el mapa es más ancho que el contenedor, se puede mover.
+      // El límite izquierdo es 0, el derecho es la diferencia de anchos.
+      const minPanX = containerRect.width - mapWidth;
+      const maxPanX = 0;
+      newOffsetX = Math.max(minPanX, Math.min(maxPanX, offset.x));
     } else {
-      newOffsetX = (containerRect.width - mapWidth) / 2
+      // Si el mapa es menos ancho, se centra.
+      newOffsetX = (containerRect.width - mapWidth) / 2;
     }
-    
+
+    // Lógica para el eje Y (vertical)
     if (mapHeight > containerRect.height) {
-      const maxOffsetY = (mapHeight - containerRect.height) / 2
-      newOffsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, offset.y))
+      // Si el mapa es más alto que el contenedor, se puede mover.
+      const minPanY = containerRect.height - mapHeight;
+      const maxPanY = 0;
+      newOffsetY = Math.max(minPanY, Math.min(maxPanY, offset.y));
     } else {
-      newOffsetY = (containerRect.height - mapHeight) / 2
+      // Si el mapa es menos alto, se centra.
+      newOffsetY = (containerRect.height - mapHeight) / 2;
     }
-    
-    return { x: newOffsetX, y: newOffsetY }
-  }, [mapWidth, mapHeight])
+
+    return { x: newOffsetX, y: newOffsetY };
+  }, [mapWidth, mapHeight]);
 
   useEffect(() => {
     return () => {
       if (throttleRef.current) {
         cancelAnimationFrame(throttleRef.current)
       }
-      if (wheelThrottleRef.current) {
-        cancelAnimationFrame(wheelThrottleRef.current)
-      }
-      if (wheelDebounceRef.current) {
-        clearTimeout(wheelDebounceRef.current)
-      }
     }
   }, [])
-
-  useEffect(() => {
-    const correctedOffset = constrainPanOffset(panOffset)
-    if (correctedOffset.x !== panOffset.x || correctedOffset.y !== panOffset.y) {
-      setPanOffset(correctedOffset)
-    }
-  }, [zoomLevel, constrainPanOffset, panOffset])
-
   useEffect(() => {
     const handleResize = () => {
       setPanOffset(prev => constrainPanOffset(prev))
@@ -162,29 +157,52 @@ export function useMapInteraction({
     e.preventDefault()
   }, [])
 
+
   const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
 
-    if (wheelThrottleRef.current) return
-
-    wheelThrottleRef.current = requestAnimationFrame(() => {
-      const delta = e.deltaY > 0 ? -zoomStep : zoomStep
-      setZoomLevel((prev) => {
-        const newZoom = Math.max(minZoom, Math.min(maxZoom, prev + delta))
-        return newZoom
-      })
-      wheelThrottleRef.current = null
-    })
-
-    if (wheelDebounceRef.current) {
-      clearTimeout(wheelDebounceRef.current)
+    // Si ya hay una actualización en curso, ignorar este evento.
+    if (wheelThrottleRef.current) {
+      return;
     }
 
-    wheelDebounceRef.current = setTimeout(() => {
-      setPanOffset(prev => constrainPanOffset(prev))
-    }, 150) as unknown as number
-  }, [constrainPanOffset, zoomStep, minZoom, maxZoom])
+    // Marcar que una actualización está en proceso.
+    wheelThrottleRef.current = true;
+
+    requestAnimationFrame(() => {
+      // 1. Obtener la posición del mouse relativa al contenedor del mapa
+      const rect = mapContainerRef.current?.getBoundingClientRect();
+      if (!rect) {
+        wheelThrottleRef.current = false;
+        return;
+      }
+      
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      // 2. Calcular el nuevo nivel de zoom
+      const delta = e.deltaY > 0 ? -zoomStep : zoomStep;
+      const newZoomLevel = Math.max(minZoom, Math.min(maxZoom, zoomLevel + delta));
+
+      if (newZoomLevel !== zoomLevel) {
+        // 3. Calcular el factor de zoom y el nuevo desplazamiento (pan)
+        const zoomFactor = newZoomLevel / zoomLevel;
+        const newPanOffset = {
+          x: mouseX - (mouseX - panOffset.x) * zoomFactor,
+          y: mouseY - (mouseY - panOffset.y) * zoomFactor
+        };
+
+        // 4. Aplicar el nuevo zoom y el pan corregido
+        setZoomLevel(newZoomLevel);
+        setPanOffset(constrainPanOffset(newPanOffset));
+      }
+
+      // Liberar el bloqueo para permitir la siguiente actualización.
+      wheelThrottleRef.current = false;
+    });
+
+  }, [zoomLevel, panOffset, zoomStep, minZoom, maxZoom, constrainPanOffset, mapContainerRef]);
 
   // Function to set up the wheel event listener with passive: false
   const setupWheelEventListener = useCallback(() => {

@@ -10,7 +10,7 @@ import { useAppStore } from "@/store/appStore" // Importar el store global
 
 export function VehiclesList() {
   const [searchVehicle, setSearchVehicle] = useState("")
-  
+  const [selectedStatus, setSelectedStatus] = useState<string>("")
   // Obtener el modo actual
   const mode = useAppStore((state) => state.mode);
   
@@ -47,6 +47,7 @@ export function VehiclesList() {
             onChange={(e) => setSearchVehicle(e.target.value)}
             className="w-full"
           />
+          
         </div>
 
         <div className="max-h-96 overflow-auto">

@@ -22,7 +22,7 @@ export function SimulationMap() {
     handleZoomIn, handleZoomOut, handleResetZoom, handleMouseDown, handleMouseMove, handleMouseUp, setupWheelEventListener,
   } = useMapInteraction({
     gridCols: GRID_COLS, gridRows: GRID_ROWS, baseGridSize: BASE_GRID_SIZE,
-    initialZoom: 100, minZoom: 25, maxZoom: 300, zoomStep: 25
+    initialZoom: 100, minZoom: 25, maxZoom: 300, zoomStep: 10
   })
 
   // Hook para manejar modales
