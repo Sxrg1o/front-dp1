@@ -103,7 +103,7 @@ export interface SimulationStatusDTO {
 
 // Added from user prompt
 export interface SimulationConfig {
-  escenario: 'semanal' | 'colapso';
+  escenario: 'semanal' | 'colapso' | 'operational';
   fechaInicio: string;
   fechaFinal?: string;
 }

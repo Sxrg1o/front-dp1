@@ -64,6 +64,8 @@ export interface SimulationActions {
   setPlaybackStatus: (status: PlaybackStatus) => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
+
+  setOperationalConfig: (config: SimulationConfig | null) => void;
 }
 
 // Acciones para los datos de la simulación

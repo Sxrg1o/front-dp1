@@ -72,6 +72,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     simulation: { ...state.simulation, config }
   })),
 
+  setOperationalConfig: (config) => set((state) => ({
+    operational: { ...state.operational, config }
+  })),
+
   setTiempoActual: (tiempo) => set((state) => ({
     simulation: { ...state.simulation, tiempoActual: tiempo }
   })),

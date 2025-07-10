@@ -22,7 +22,6 @@ export function useOperationalListener() {
         console.error("No se pudo cargar el snapshot operacional inicial.");
       }
 
-      // 3. CONECTAR EL WEBSOCKET PARA ACTUALIZACIONES EN TIEMPO REAL
       if (stompClient && stompClient.active) return;
       
       stompClient = new Client({
@@ -49,7 +48,6 @@ export function useOperationalListener() {
 
     initializeAndConnect();
 
-    // Función de limpieza
     return () => {
       if (stompClient && stompClient.active) {
         console.log('🛑 Desconectando de WebSocket de Operaciones.');

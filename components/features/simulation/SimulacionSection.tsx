@@ -14,31 +14,34 @@ export function SimulacionSection() {
   const [activeSimulationId, setActiveSimulationId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true); 
 
-  const setSimulationId = useAppStore((state) => state.setSimulationId);
-  const setPlaybackStatus = useAppStore((state) => state.setPlaybackStatus);
+  const { initializeSimulation, setPlaybackStatus } = useAppStore();
 
   useEffect(() => {
     const checkForActiveSimulation = async () => {
       const activeId = await haySimulacionActiva();
       
       if (activeId && activeId !== "false") {
-        setActiveSimulationId(activeId);
+        console.log(`Recargando simulación activa: ${activeId}`);
         
-        setSimulationId(activeId);
+        await initializeSimulation(activeId);
+        
         setPlaybackStatus('running');
+
+        setActiveSimulationId(activeId);
       }
+      
       setIsLoading(false);
     };
 
     checkForActiveSimulation();
-  }, [setSimulationId, setPlaybackStatus]); 
+  }, [initializeSimulation, setPlaybackStatus]); 
 
   const handleStartSimulation = async (config: SimulationConfig, requestData: SimulationRequest) => {
     try {
       const status: SimulationStatusDTO = await iniciarNuevaSimulacion(requestData);
       if (status && status.simulationId) {
+        await initializeSimulation(status.simulationId);
         setActiveSimulationId(status.simulationId);
-        setSimulationId(status.simulationId);
       } else {
         console.error("No se recibió un ID de simulación del backend.");
       }
