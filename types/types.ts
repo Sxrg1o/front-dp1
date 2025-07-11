@@ -1,3 +1,8 @@
+export interface PointDTO {
+  x: number
+  y: number
+}
+
 export interface TruckDTO {
   id: string
   x: number
@@ -6,6 +11,7 @@ export interface TruckDTO {
   combustibleDisponible: number
   status: string
   consumoAcumulado: number
+  ruta: PointDTO[]
 }
 
 export interface Pedido {

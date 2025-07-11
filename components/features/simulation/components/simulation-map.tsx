@@ -3,9 +3,9 @@
 import { useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ZoomIn, ZoomOut } from "lucide-react"
+import { Route, ZoomIn, ZoomOut } from "lucide-react"
 import { useMapInteraction } from "@/hooks/use-map-interaction"
-import { TruckLayer, TankLayer, OrderLayer, BlockageLayer } from "./map/layers"
+import { TruckLayer, TankLayer, OrderLayer, BlockageLayer, RouteLayer } from "./map/layers"
 import { TruckModal, TankModal, BreakdownModal, OrderModal, useMapModals } from "./map/modals"
 import { useAppStore } from "@/store/appStore"
 
@@ -102,6 +102,10 @@ export function SimulationMap() {
                 GRID_SIZE={GRID_SIZE}
                 GRID_COLS={GRID_COLS}
                 GRID_ROWS={GRID_ROWS}
+              />
+
+              <RouteLayer 
+                GRID_SIZE={GRID_SIZE}
               />
               
               <OrderLayer 
