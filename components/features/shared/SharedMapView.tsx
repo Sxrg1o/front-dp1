@@ -6,20 +6,16 @@ import { formatSimulationTime } from "@/utils/timeUtils"
 import { useAppStore } from "@/store/appStore"
 
 export function SharedMapView() {
-  // Obtener el modo de la aplicación
   const mode = useAppStore((state) => state.mode);
   
-  // Extraer datos del store global según el modo
   const simulationState = useAppStore((state) => state.simulation);
   const operationalState = useAppStore((state) => state.operational);
   const simulationData = useAppStore((state) => state.simulationData);
   const operationalData = useAppStore((state) => state.operationalData);
   
-  // Seleccionar el estado y datos según el modo actual
   const currentState = mode === 'simulation' ? simulationState : operationalState;
   const currentData = mode === 'simulation' ? simulationData : operationalData;
   
-  // Extraer los datos necesarios
   const { tiempoActual, config } = currentState;
   const { pedidos, camiones } = currentData;
 
@@ -58,12 +54,14 @@ export function SharedMapView() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">{getTitle()}</h1>
-          <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
-            <span>{getDateInfo()}</span>
-            <span>Tiempo transcurrido: {formatSimulationTime(tiempoActual)}</span>
-            <span>Flota: {camiones.length} 🚛</span>
-            <span>Pedidos pendientes: {pedidos.filter(p => !p.atendido).length}</span>
-          </div>
+          {mode === 'simulation' && (
+            <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
+              <span>{getDateInfo()}</span>
+              <span>Tiempo transcurrido: {formatSimulationTime(tiempoActual)}</span>
+              <span>Flota: {camiones.length} 🚛</span>
+              <span>Pedidos pendientes: {pedidos.filter(p => !p.atendido).length}</span>
+            </div>
+          )}
         </div>
       </div>
 

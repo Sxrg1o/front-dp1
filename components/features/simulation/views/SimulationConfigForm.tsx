@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { SimulationRequest, SimulationConfig } from "../../../../types/types" 
-import { guardarArchivoTemporal } from "../../../../services/archivo-service"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,13 +18,7 @@ export function SimulationConfigForm({ onStartSimulation }: SimulationConfigForm
   const [escenario, setEscenario] = useState<'semanal' | 'colapso' | "">("")
   const [fechaInicio, setFechaInicio] = useState("")
   const [fechaFinal, setFechaFinal] = useState("")
-  
-  // C-FIX 2: Añadir estados para cada archivo
-  const [pedidosFile, setPedidosFile] = useState<File | null>(null);
-  const [bloqueosFile, setBloqueosFile] = useState<File | null>(null);
-  const [averiasFile, setAveriasFile] = useState<File | null>(null);
-  const [mantenimientosFile, setMantenimientosFile] = useState<File | null>(null);
-
+  const [duracion, setDuracion] = useState(7)
   const [isLoading, setIsLoading] = useState(false);
   
   // Get the setSimulationConfig action from the store
@@ -34,12 +27,19 @@ export function SimulationConfigForm({ onStartSimulation }: SimulationConfigForm
   const handleEscenarioChange = (value: string) => {
     const escenarioValue = value as 'semanal' | 'colapso'
     setEscenario(escenarioValue)
-    if (escenarioValue === "semanal" && fechaInicio) {
-      const startDate = new Date(fechaInicio)
-      const endDate = new Date(startDate)
-      endDate.setDate(startDate.getDate() + 7)
-      setFechaFinal(endDate.toISOString().split('T')[0])
+    
+    if (escenarioValue === "semanal") {
+      // Para simulación semanal, establecer duración a 7 días
+      setDuracion(7)
+      if (fechaInicio) {
+        const startDate = new Date(fechaInicio)
+        const endDate = new Date(startDate)
+        endDate.setDate(startDate.getDate() + 7)
+        setFechaFinal(endDate.toISOString().split('T')[0])
+      }
     } else {
+      // Para simulación al colapso, duración "infinita" y sin fecha final
+      setDuracion(Number.MAX_SAFE_INTEGER)
       setFechaFinal("")
     }
   }
@@ -49,44 +49,37 @@ export function SimulationConfigForm({ onStartSimulation }: SimulationConfigForm
     if (escenario === "semanal" && fecha) {
       const startDate = new Date(fecha)
       const endDate = new Date(startDate)
-      endDate.setDate(startDate.getDate() + 7)
+      endDate.setDate(startDate.getDate() + duracion)
       setFechaFinal(endDate.toISOString().split('T')[0])
     }
   }
 
   const handleSubmit = async () => {
-    if (!escenario || !fechaInicio || !pedidosFile) { // Ensure mandatory fields are filled
+    if (!escenario || !fechaInicio) { // Ensure mandatory fields are filled
         console.error("Por favor, complete todos los campos obligatorios.");
         // Optionally, set an error state to show a message to the user
         return;
     }
     setIsLoading(true);
     try {
-      // C-FIX 3: Subir cada archivo y obtener su ID
-      const fileIdPedidos = pedidosFile ? await guardarArchivoTemporal(pedidosFile) : "";
-      const fileIdBloqueos = bloqueosFile ? await guardarArchivoTemporal(bloqueosFile) : undefined; // Use undefined if optional and not provided
-      const fileIdAverias = averiasFile ? await guardarArchivoTemporal(averiasFile) : undefined;
-      const fileIdMantenimientos = mantenimientosFile ? await guardarArchivoTemporal(mantenimientosFile) : undefined;
-
+      // Create the simulation configuration
       const config: SimulationConfig = {
         escenario: escenario as 'semanal' | 'colapso',
         fechaInicio,
         ...(escenario === 'semanal' && fechaFinal && { fechaFinal })
       }
 
-      // Construir el objeto SimulationRequest
+      // Build the request data object
       const requestData: SimulationRequest = {
-        nombreSimulacion: `Simulación ${config.escenario} ${new Date(config.fechaInicio).toLocaleDateString()}`, // More descriptive name
-        fileIdPedidos,
-        // Solo incluir los IDs de archivo si existen
-        ...(fileIdBloqueos && { fileIdBloqueos }),
-        ...(fileIdAverias && { fileIdAverias }),
-        ...(fileIdMantenimientos && { fileIdMantenimientos }),
+        nombreSimulacion: `Simulación ${config.escenario} ${new Date(config.fechaInicio).toLocaleDateString()}`,
+        fechaInicio,
+        duracionDias: escenario === 'semanal' ? duracion : -1 // Use -1 to indicate "infinite" duration for collapse simulation
       };
       
       // Save the config to the global store
       setSimulationConfig(config);
 
+      // Call the parent component's function with the config and request data
       onStartSimulation(config, requestData);
 
     } catch (error) {
@@ -144,69 +137,10 @@ export function SimulationConfigForm({ onStartSimulation }: SimulationConfigForm
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label className="py-2 font-bold">Archivos de Configuración</Label>
-            <p className="text-sm text-gray-600">Los campos marcados con * son obligatorios</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="pedidos" className="py-1">Pedidos *</Label>
-                <Input 
-                  id="pedidos" 
-                  type="file" 
-                  accept=".csv,.xlsx,.xls,.json"
-                  onChange={(e) => setPedidosFile(e.target.files ? e.target.files[0] : null)}
-                  className={!pedidosFile && isLoading === false ? "border-red-300" : ""} // Adjusted condition
-                />
-                {pedidosFile && (
-                  <p className="text-xs text-green-600 mt-1">✓ {pedidosFile.name}</p>
-                )}
-                {!pedidosFile && (
-                  <p className="text-xs text-red-500 mt-1">Este archivo es obligatorio</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="mantenimientos" className="py-1">Mantenimientos</Label>
-                <Input 
-                  id="mantenimientos" 
-                  type="file" 
-                  accept=".csv,.xlsx,.xls,.json"
-                  onChange={(e) => setMantenimientosFile(e.target.files ? e.target.files[0] : null)} 
-                />
-                 {mantenimientosFile && (
-                  <p className="text-xs text-green-600 mt-1">✓ {mantenimientosFile.name}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="averias" className="py-1">Averías</Label>
-                <Input 
-                  id="averias" 
-                  type="file" 
-                  accept=".csv,.xlsx,.xls,.json"
-                  onChange={(e) => setAveriasFile(e.target.files ? e.target.files[0] : null)}
-                />
-                {averiasFile && (
-                  <p className="text-xs text-green-600 mt-1">✓ {averiasFile.name}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="bloqueos" className="py-1">Bloqueos</Label>
-                <Input 
-                  id="bloqueos" 
-                  type="file" 
-                  accept=".csv,.xlsx,.xls,.json"
-                  onChange={(e) => setBloqueosFile(e.target.files ? e.target.files[0] : null)}
-                />
-                {bloqueosFile && (
-                  <p className="text-xs text-green-600 mt-1">✓ {bloqueosFile.name}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
           <Button 
             onClick={handleSubmit} 
             className="w-full" 
-            disabled={isLoading || !escenario || !fechaInicio || !pedidosFile}
+            disabled={isLoading || !escenario || !fechaInicio}
           >
             {isLoading ? "Procesando..." : "Iniciar Simulación"}
           </Button>

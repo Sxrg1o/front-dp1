@@ -36,7 +36,6 @@ export function PedidosSection() {
           setPedidos(data)
           setError(null)
         }
-        console.log('DATA RECIBIDA', data)
       } catch (error: unknown) {
         console.error('Error loading pedidos:', error)
 

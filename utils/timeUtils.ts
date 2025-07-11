@@ -3,17 +3,38 @@
  * @param totalMinutes - Total time in minutes
  * @returns Formatted string in the format "XXd XXh XXm" or "XXh XXm" if no days
  */
-export function formatSimulationTime(totalMinutes: number): string {
-  if (totalMinutes < 0) return "00h 00m";
+export function formatSimulationTime(totalMinutes: number | string): string {
   
-  const days = Math.floor(totalMinutes / (24 * 60));
-  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
-  const minutes = Math.floor(totalMinutes % 60);
+  // Asegurarse de que totalMinutes sea un número
+  let minutes: number;
+  if (typeof totalMinutes === 'string') {
+    // Intentar parsear como fecha ISO si es un string con formato de fecha
+    if (totalMinutes.includes('T') || totalMinutes.includes('-')) {
+      const date = new Date(totalMinutes);
+      if (!isNaN(date.getTime())) {
+        // Convertir la fecha a minutos desde medianoche
+        minutes = date.getHours() * 60 + date.getMinutes();
+      } else {
+        minutes = parseInt(totalMinutes, 10);
+      }
+    } else {
+      minutes = parseInt(totalMinutes, 10);
+    }
+  } else {
+    minutes = totalMinutes;
+  }
+  
+  // Comprobar si es un número válido
+  if (isNaN(minutes) || minutes < 0) return "00h 00m";
+  
+  const days = Math.floor(minutes / (24 * 60));
+  const hours = Math.floor((minutes % (24 * 60)) / 60);
+  const mins = Math.floor(minutes % 60);
   
   if (days > 0) {
-    return `${days}d ${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m`;
+    return `${days}d ${hours.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m`;
   } else {
-    return `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m`;
+    return `${hours.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m`;
   }
 }
 
@@ -22,12 +43,33 @@ export function formatSimulationTime(totalMinutes: number): string {
  * @param totalMinutes - Total time in minutes
  * @returns Object with days, hours, and minutes
  */
-export function parseSimulationTime(totalMinutes: number): { days: number; hours: number; minutes: number } {
-  if (totalMinutes < 0) return { days: 0, hours: 0, minutes: 0 };
+export function parseSimulationTime(totalMinutes: number | string): { days: number; hours: number; minutes: number } {
   
-  const days = Math.floor(totalMinutes / (24 * 60));
-  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
-  const minutes = Math.floor(totalMinutes % 60);
+  // Asegurarse de que totalMinutes sea un número
+  let minutes: number;
+  if (typeof totalMinutes === 'string') {
+    // Intentar parsear como fecha ISO si es un string con formato de fecha
+    if (totalMinutes.includes('T') || totalMinutes.includes('-')) {
+      const date = new Date(totalMinutes);
+      if (!isNaN(date.getTime())) {
+        // Convertir la fecha a minutos desde medianoche
+        minutes = date.getHours() * 60 + date.getMinutes();
+      } else {
+        minutes = parseInt(totalMinutes, 10);
+      }
+    } else {
+      minutes = parseInt(totalMinutes, 10);
+    }
+  } else {
+    minutes = totalMinutes;
+  }
+  
+  // Comprobar si es un número válido
+  if (isNaN(minutes) || minutes < 0) return { days: 0, hours: 0, minutes: 0 };
+  
+  const days = Math.floor(minutes / (24 * 60));
+  const hours = Math.floor((minutes % (24 * 60)) / 60);
+  const mins = Math.floor(minutes % 60);
   
   return { days, hours, minutes };
 }

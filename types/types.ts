@@ -72,10 +72,21 @@ export interface BloqueoDTO {
   nodes: { x: number; y: number }[]
 }
 
+
 export interface AveriaDTO {
     turno: string;           
     codigoVehiculo: string; 
     tipoIncidente: string; 
+}
+
+
+// Interfaz para los datos de rutas asignadas a camiones
+export interface RutaDTO {
+  camionId: string
+  nodosRuta: { x: number; y: number }[]
+  pedidosIds: number[]
+  tiempoEstimado: number
+
 }
 
 export interface SimulacionSnapshotDTO {
@@ -89,9 +100,8 @@ export interface SimulacionSnapshotDTO {
 
 export interface SimulationRequest {
   nombreSimulacion: string;
-  fileIdPedidos: string;
-  fileIdBloqueos?: string; 
-  fileIdAverias?: string;
+  fechaInicio: string;
+  duracionDias: number;
 }
 
 export interface SimulationStatusDTO {
@@ -103,7 +113,11 @@ export interface SimulationStatusDTO {
 
 // Added from user prompt
 export interface SimulationConfig {
-  escenario: 'semanal' | 'colapso';
+  escenario: 'semanal' | 'colapso' | 'operational';
   fechaInicio: string;
   fechaFinal?: string;
+}
+
+export interface SpeedRequest {
+  delayMs: number;
 }

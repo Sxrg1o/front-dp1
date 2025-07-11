@@ -5,22 +5,19 @@ import { useAppStore } from "@/store/appStore"
 import { OperationsView } from "./views/OperationsView"
 
 export function OperacionesSection() {
-  // Inicializar configuración para modo operacional
-  const { setSimulationConfig, setSimulationId } = useAppStore();
+  const { setOperationalConfig, setMode } = useAppStore();
 
   useEffect(() => {
+    setMode('operational');
+    
     const today = new Date().toISOString().split('T')[0];
     
-    // Configurar el store para modo operacional en tiempo real
-    setSimulationConfig({
-      escenario: 'semanal',
+    setOperationalConfig({
+      escenario: 'operational', 
       fechaInicio: today,
     });
     
-    // Usar un ID especial para modo operacional
-    setSimulationId('operations-live');
-  }, [setSimulationConfig, setSimulationId]);
+  }, [setOperationalConfig, setMode]);
 
-  // Renderizar la vista de operaciones
   return <OperationsView />
 }

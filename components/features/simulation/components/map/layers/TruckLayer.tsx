@@ -1,6 +1,6 @@
 import { TruckDTO } from "@/types/types"
 import { Truck } from "lucide-react"
-import { useAppStore } from "@/store/appStore" // Importar el store global
+import { useAppStore } from "@/store/appStore" 
 
 interface TruckLayerProps {
   GRID_SIZE: number
@@ -53,8 +53,8 @@ export function TruckLayer({ GRID_SIZE, onTruckClick }: TruckLayerProps) {
           key={`truck-${truck.id}`}
           className="absolute cursor-pointer hover:scale-110 transition-transform z-30 flex items-center justify-center pointer-events-auto"
           style={{
-            top: `${truck.y * GRID_SIZE + 1}px`,
-            left: `${truck.x * GRID_SIZE + 1}px`,
+            top: `${(truck.y - 1) * GRID_SIZE + 1}px`,
+            left: `${(truck.x - 1) * GRID_SIZE + 1}px`,
             width: `${GRID_SIZE}px`,
             height: `${GRID_SIZE}px`,
             imageRendering: "crisp-edges",

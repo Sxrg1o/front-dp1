@@ -7,7 +7,7 @@ import { ZoomIn, ZoomOut } from "lucide-react"
 import { useMapInteraction } from "@/hooks/use-map-interaction"
 import { TruckLayer, TankLayer, OrderLayer, BlockageLayer } from "./map/layers"
 import { TruckModal, TankModal, BreakdownModal, OrderModal, useMapModals } from "./map/modals"
-import { useAppStore } from "@/store/appStore" // Importar el store global
+import { useAppStore } from "@/store/appStore"
 
 const BASE_GRID_SIZE = 15 
 const GRID_COLS = 70 
@@ -22,7 +22,7 @@ export function SimulationMap() {
     handleZoomIn, handleZoomOut, handleResetZoom, handleMouseDown, handleMouseMove, handleMouseUp, setupWheelEventListener,
   } = useMapInteraction({
     gridCols: GRID_COLS, gridRows: GRID_ROWS, baseGridSize: BASE_GRID_SIZE,
-    initialZoom: 100, minZoom: 25, maxZoom: 300, zoomStep: 10
+    initialZoom: 100, minZoom: 80, maxZoom: 200, zoomStep: 5
   })
 
   // Hook para manejar modales

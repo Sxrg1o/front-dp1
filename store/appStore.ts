@@ -2,18 +2,21 @@
 import { create } from 'zustand';
 import { 
   AppState, 
-  AppActions,
-  AppStore,
-  PlaybackStatus,
+  AppStore
 } from '@/types/store';
+
 import { AveriaDTO, SimulacionSnapshotDTO, SimulationConfig } from '@/types/types'; // Corregida importación de SimulationConfig
 import { useEffect } from 'react'; // Añadida importación de useEffect
+
 import {
   avanzarUnMinuto,
-  resetSimulacion,
   avanzarMultiplesMinutos,
   obtenerSnapshot,
-  addAveriaSimulacion
+  addAveriaSimulacion,
+  ejecutarSimulacion,
+  pausarSimulacion,
+  reanudarSimulacion,
+  detenerSimulacion
 } from '@/services/simulacion-service';
 
 import api from '../lib/api-client';
@@ -48,14 +51,16 @@ const initialState: AppState = {
     camiones: [],
     tanques: [],
     bloqueos: [],
-    averias: []
+    averias: [],
+    activeBlockageIds: [] 
   },
   operationalData: {
     pedidos: [],
     camiones: [],
     tanques: [],
     bloqueos: [],
-    averias: []
+    averias: [],
+    activeBlockageIds: []
   },
   ui: {
     selectedEntityId: null,
@@ -76,6 +81,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   setSimulationConfig: (config) => set((state) => ({
     simulation: { ...state.simulation, config }
+  })),
+
+  setOperationalConfig: (config) => set((state) => ({
+    operational: { ...state.operational, config }
   })),
 
   setTiempoActual: (tiempo) => set((state) => ({
@@ -108,23 +117,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   // Acción para establecer el modo
   setMode: (mode) => set(() => ({ mode })),
-
-  // Acciones de datos para simulación
-  setSimulationPedidos: (pedidos) => set((state) => ({
-    simulationData: { ...state.simulationData, pedidos }
-  })),
-
-  setSimulationCamiones: (camiones) => set((state) => ({
-    simulationData: { ...state.simulationData, camiones }
-  })),
-
-  setSimulationTanques: (tanques) => set((state) => ({
-    simulationData: { ...state.simulationData, tanques }
-  })),
-
-  setSimulationBloqueos: (bloqueos) => set((state) => ({
-    simulationData: { ...state.simulationData, bloqueos }
-  })),
   
   // Acciones de datos para operaciones
   setOperationalPedidos: (pedidos) => set((state) => ({
@@ -157,7 +149,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
           capacidadDisponible: t.capacidadDisponible,
         }))
       : [];
-
+    
     set((state) => ({
       simulation: {
         ...state.simulation,
@@ -166,32 +158,16 @@ export const useAppStore = create<AppStore>((set, get) => ({
       simulationData: {
         ...state.simulationData,
         pedidos: snapshot.pedidos || [],
-        camiones: snapshot.camiones || [],
+        camiones: (snapshot.camiones || []).map((c: any) => ({
+          ...c,
+          status: c.status ?? c.estado ?? ""
+        })),
         tanques: tanquesDTO,
         bloqueos: snapshot.bloqueos || [],
         averias: snapshot.averias || []
       }
     }));
 
-    // Detectar eventos para la simulación
-    if (snapshot.pedidos) {
-      snapshot.pedidos.forEach((p) => {
-        if (p.tiempoCreacion === snapshot.tiempoActual) {
-          console.log(
-            `🆕 Pedido ${p.id} recibido en (${p.x}, ${p.y}), ` +
-            `volumen=${p.volumen} m³, límite t+${p.tiempoLimite}`
-          );
-        }
-      });
-    }
-
-    if (snapshot.bloqueos) {
-      snapshot.bloqueos.forEach((b) => {
-        if (b.tiempoInicio === snapshot.tiempoActual) {
-          console.log(`⛔ Bloqueo ${b.id} comienza en t+${b.tiempoInicio}`);
-        }
-      });
-    }
   },
 
   updateOperationalFromSnapshot: (snapshot) => {
@@ -217,32 +193,17 @@ export const useAppStore = create<AppStore>((set, get) => ({
       operationalData: {
         ...state.operationalData,
         pedidos: snapshot.pedidos || [],
-        camiones: snapshot.camiones || [],
+        camiones: (snapshot.camiones || []).map((c: any) => ({
+          ...c,
+          status: c.status ?? c.estado ?? ""
+        })),
         tanques: tanquesDTO,
         bloqueos: snapshot.bloqueos || [],
         averias: snapshot.averias || []
       }
     }));
 
-    // Detectar eventos (esto podría moverse a un middleware o acción específica)
-    if (snapshot.pedidos) {
-      snapshot.pedidos.forEach((p) => {
-        if (p.tiempoCreacion === snapshot.tiempoActual) {
-          console.log(
-            `🆕 Pedido ${p.id} recibido en (${p.x}, ${p.y}), ` +
-            `volumen=${p.volumen} m³, límite t+${p.tiempoLimite}`
-          );
-        }
-      });
-    }
 
-    if (snapshot.bloqueos) {
-      snapshot.bloqueos.forEach((b) => {
-        if (b.tiempoInicio === snapshot.tiempoActual) {
-          console.log(`⛔ Bloqueo ${b.id} comienza en t+${b.tiempoInicio}`);
-        }
-      });
-    }
   },
 
   // Acciones de UI
@@ -292,8 +253,15 @@ export const useAppStore = create<AppStore>((set, get) => ({
       setPlaybackStatus, 
       setLoading, 
       setError, 
-      updateSimulationFromSnapshot
+      updateSimulationFromSnapshot,
+      pauseSimulation
     } = get();
+    
+    // Si está ejecutándose, entonces pausar (toggle)
+    if (simulation.playbackStatus === 'running') {
+      pauseSimulation();
+      return;
+    }
     
     if (!simulation.simulationId) {
       console.error("No hay un ID de simulación activo");
@@ -304,10 +272,17 @@ export const useAppStore = create<AppStore>((set, get) => ({
     setError(null);
 
     try {
-      // Si es la primera vez o después de reiniciar, obtenemos un snapshot fresco
-      if (simulation.tiempoActual === 0) {
+      // Si es la primera vez o después de reiniciar, llamamos al endpoint /run
+      if (simulation.playbackStatus === 'idle') {
+        // Primero obtenemos un snapshot fresco
         const snapshot = await obtenerSnapshot(simulation.simulationId);
         updateSimulationFromSnapshot(snapshot);
+        
+        // Luego iniciamos la ejecución continua en el backend
+        await ejecutarSimulacion(simulation.simulationId);
+      } else if (simulation.playbackStatus === 'paused') {
+        // Si está pausada, llamamos al endpoint para reanudar
+        await reanudarSimulacion();
       }
       
       setPlaybackStatus('running');
@@ -319,8 +294,20 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  pauseSimulation: () => {
-    get().setPlaybackStatus('paused');
+  pauseSimulation: async () => {
+    const { simulation, setPlaybackStatus, setError } = get();
+    
+    if (!simulation.simulationId || simulation.playbackStatus !== 'running') {
+      return;
+    }
+    
+    try {
+      await pausarSimulacion();
+      setPlaybackStatus('paused');
+    } catch (error) {
+      console.error("❌ Error al pausar la simulación:", error);
+      setError("Error al pausar la simulación");
+    }
   },
 
   stopSimulation: async () => {
@@ -329,7 +316,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
       setPlaybackStatus,
       setLoading,
       setError,
-      updateSimulationFromSnapshot,
     } = get();
 
     if (!simulation.simulationId) {
@@ -342,9 +328,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
     setError(null);
 
     try {
-      await resetSimulacion(simulation.simulationId);
-      const snapshot = await obtenerSnapshot(simulation.simulationId);
-      updateSimulationFromSnapshot(snapshot);
+      // Reiniciamos la simulación en el backend
+      await detenerSimulacion(simulation.simulationId);
     } catch (error) {
       console.error("❌ Error al detener la simulación:", error);
       setError("Error al detener la simulación");
@@ -416,11 +401,12 @@ addBreakdown: async (averia: Omit<AveriaDTO, 'turno'>) => {
   setError(null);
   
   try {
-    const minutos = simulation.tiempoActual;
-    const minutosDelDia = minutos % 1440; // 1440 minutos = 24 horas
-    const turno = 
-      minutosDelDia < 480 ? 'T1' : // 480 minutos = 8 horas
-      minutosDelDia < 960 ? 'T2' : // 960 minutos = 16 horas
+    const date = new Date(simulation.tiempoActual);
+    const minutos = date.getHours() * 60 + date.getMinutes();
+    const minutosDelDia = minutos % 1440;
+    const turno =
+      minutosDelDia < 480 ? 'T1' :
+      minutosDelDia < 960 ? 'T2' :
       'T3';
     
     // Crear el objeto con el turno
@@ -449,43 +435,3 @@ addBreakdown: async (averia: Omit<AveriaDTO, 'turno'>) => {
   // Ya definido arriba
   // setMode: (mode) => set(() => ({ mode })),
 }));
-
-// Hook personalizado para el polling de la simulación
-export function useSimulationPolling() {
-  const { 
-    simulation,
-    updateSimulationFromSnapshot,
-    setPlaybackStatus,
-    setError
-  } = useAppStore();
-
-  useEffect(() => {
-    // Si no está en marcha o está pausado, no hacemos nada
-    if (
-      simulation.playbackStatus !== 'running' || 
-      !simulation.simulationId
-    ) {
-      return;
-    }
-
-    const interval = setInterval(async () => {
-      try {
-        const snapshot = await avanzarUnMinuto(simulation.simulationId!);
-        updateSimulationFromSnapshot(snapshot);
-      } catch (error) {
-        console.error("❌ Falló el paso de simulación:", error);
-        clearInterval(interval);
-        setPlaybackStatus('idle');
-        setError("Error durante la simulación automática");
-      }
-    }, 1000); // 1 segundo entre pasos
-
-    return () => clearInterval(interval);
-  }, [
-    simulation.playbackStatus,
-    simulation.simulationId,
-    updateSimulationFromSnapshot,
-    setPlaybackStatus,
-    setError
-  ]);
-}

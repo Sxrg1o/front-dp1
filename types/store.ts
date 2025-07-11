@@ -34,6 +34,7 @@ export interface SimulationDataState {
   tanques: TanqueDTO[];
   bloqueos: BloqueoDTO[];
   averias: AveriaDTO[];
+  activeBlockageIds: string[];
 }
 
 // Estado de configuración de la UI
@@ -65,15 +66,12 @@ export interface SimulationActions {
   setPlaybackStatus: (status: PlaybackStatus) => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
+
+  setOperationalConfig: (config: SimulationConfig | null) => void;
 }
 
 // Acciones para los datos de la simulación
 export interface DataActions {
-  // Acciones para datos de simulación
-  setSimulationPedidos: (pedidos: PedidoDTO[]) => void;
-  setSimulationCamiones: (camiones: TruckDTO[]) => void;
-  setSimulationTanques: (tanques: TanqueDTO[]) => void;
-  setSimulationBloqueos: (bloqueos: BloqueoDTO[]) => void;
   updateSimulationFromSnapshot: (snapshot: SimulacionSnapshotDTO) => void;
   
   // Acciones para datos de operaciones

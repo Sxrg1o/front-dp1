@@ -1,5 +1,5 @@
 import type { BloqueoDTO } from "@/types/types"
-import { useAppStore } from "@/store/appStore" // Importar el store global
+import { useAppStore } from "@/store/appStore"
 
 interface BlockageLayerProps {
   GRID_SIZE: number
@@ -7,62 +7,49 @@ interface BlockageLayerProps {
   GRID_ROWS: number
 }
 
-export function BlockageLayer({ 
-  GRID_SIZE, 
-  GRID_COLS, 
-  GRID_ROWS 
+export function BlockageLayer({
+  GRID_SIZE,
+  GRID_COLS,
+  GRID_ROWS
 }: BlockageLayerProps) {
-  // Obtener el modo actual
   const mode = useAppStore((state) => state.mode);
   
-  // Obtener los datos según el modo
-  const bloqueos = useAppStore((state) => 
+  const allBlockages = useAppStore((state) => 
     mode === 'simulation' 
       ? state.simulationData.bloqueos 
       : state.operationalData.bloqueos
-  )
-  const tiempoActual = useAppStore((state) => 
-    mode === 'simulation' 
-      ? state.simulation.tiempoActual 
-      : state.operational.tiempoActual
-  )
-
-  // Calculate active blockages based on current time
-  const activeBlockages = bloqueos.filter(
-    (b) => tiempoActual >= b.tiempoInicio && tiempoActual < b.tiempoFin
-  )
+  );
 
   return (
     <>
-      {/* Bloqueos dinámicos como cuadrados */}
-      {activeBlockages.map((b) =>
+      {allBlockages.map((b) =>
         b.nodes.map((pt, idx) => (
           <div
             key={`${b.id}-${idx}`}
             className="absolute bg-red-500 pointer-events-none"
             style={{
-              left: `${pt.x * GRID_SIZE + 1}px`,
-              top: `${pt.y * GRID_SIZE + 1}px`,
+              left: `${(pt.x - 1) * GRID_SIZE}px`,
+              top: `${(pt.y - 1) * GRID_SIZE}px`,
               width: `${GRID_SIZE}px`,
               height: `${GRID_SIZE}px`,
             }}
-            title={`${b.description} [t=${b.tiempoInicio}-${b.tiempoFin})`}
+            title={`${b.description} [Activo]`}
           />
         ))
       )}
 
-      {/* SVG overlay para líneas de bloqueo */}
       <svg
         className="absolute top-0 left-0 w-full h-full pointer-events-none"
         style={{ width: `${GRID_SIZE * GRID_COLS}px`, height: `${GRID_SIZE * GRID_ROWS}px` }}
       >
-        {activeBlockages.map((b) =>
+        {allBlockages.map((b) =>
           b.nodes.slice(0, -1).map((pt, i) => {
-            const next = b.nodes[i + 1]
-            const x1 = pt.x * GRID_SIZE + GRID_SIZE / 2
-            const y1 = pt.y * GRID_SIZE + GRID_SIZE / 2
-            const x2 = next.x * GRID_SIZE + GRID_SIZE / 2
-            const y2 = next.y * GRID_SIZE + GRID_SIZE / 2
+            const next = b.nodes?.[i + 1]; 
+            if (!next) return null; 
+            const x1 = (pt.x - 1) * GRID_SIZE + GRID_SIZE / 2;
+            const y1 = (pt.y - 1) * GRID_SIZE + GRID_SIZE / 2;
+            const x2 = (next.x - 1) * GRID_SIZE + GRID_SIZE / 2;
+            const y2 = (next.y - 1) * GRID_SIZE + GRID_SIZE / 2;
             return (
               <line
                 key={`${b.id}-${i}`}
@@ -70,13 +57,14 @@ export function BlockageLayer({
                 y1={y1}
                 x2={x2}
                 y2={y2}
-                stroke="red"
-                strokeWidth={2}
+                stroke="rgba(239, 68, 68, 1)"
+                strokeWidth={3}
+                strokeDasharray="4 2"
               />
-            )
+            );
           })
         )}
       </svg>
     </>
-  )
+  );
 }
