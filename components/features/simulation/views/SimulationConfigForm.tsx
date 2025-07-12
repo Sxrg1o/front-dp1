@@ -73,7 +73,7 @@ export function SimulationConfigForm({ onStartSimulation }: SimulationConfigForm
       const requestData: SimulationRequest = {
         nombreSimulacion: `Simulación ${config.escenario} ${new Date(config.fechaInicio).toLocaleDateString()}`,
         fechaInicio,
-        duracionDias: escenario === 'semanal' ? duracion : -1, // Use -1 to indicate "infinite" duration for collapse simulation
+        duracionDias: escenario === 'semanal' ? duracion : 999999, // Use -1 to indicate "infinite" duration for collapse simulation
         esColapso: escenario !== 'semanal'
       };
       

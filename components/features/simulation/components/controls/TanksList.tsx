@@ -57,7 +57,6 @@ export function TanksList() {
               <TableRow>
                 <TableHead className="text-xs">Nombre</TableHead>
                 <TableHead className="text-xs text-center">Posición</TableHead>
-                <TableHead className="text-xs text-center">Capacidad</TableHead>
                 <TableHead className="text-xs text-center">Disponible</TableHead>
                 <TableHead className="text-xs text-center">Estado</TableHead>
               </TableRow>
@@ -67,7 +66,6 @@ export function TanksList() {
                 <TableRow key={tank.id}>
                   <TableCell className="text-xs font-medium">{tank.nombre}</TableCell>
                   <TableCell className="text-xs text-center">{tank.posX}, {tank.posY}</TableCell>
-                  <TableCell className="text-xs text-center">{tank.capacidadTotal.toFixed(2)} m³</TableCell>
                   <TableCell className="text-xs text-center">
                     {tank.capacidadDisponible.toFixed(2)} m³ 
                     <span className="text-gray-500 ml-1">

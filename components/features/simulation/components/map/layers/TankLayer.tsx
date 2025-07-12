@@ -25,8 +25,8 @@ export function TankLayer({ GRID_SIZE, onTankClick }: TankLayerProps) {
           key={`tank-${station.nombre || 'unnamed'}-${station.posX}-${station.posY}-${index}`}
           className="absolute cursor-pointer hover:scale-110 transition-transform z-20 flex items-center justify-center pointer-events-auto"
           style={{
-            top: `${(station.posY - 1) * GRID_SIZE + 1}px`,
-            left: `${(station.posX - 1) * GRID_SIZE + 1}px`,
+            top: `${(station.posY) * GRID_SIZE + 1}px`,
+            left: `${(station.posX) * GRID_SIZE + 1}px`,
             width: `${GRID_SIZE}px`,
             height: `${GRID_SIZE}px`,
           }}

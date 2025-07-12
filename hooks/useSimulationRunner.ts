@@ -39,7 +39,8 @@ export function useSimulationRunner(simulationId: string) {
     setError,
     setPlaybackStatus,
     initializeSimulation,
-    setSimulationId
+    setSimulationId,
+    openEndModal
   } = useAppStore();
   
   // Asegurarnos de que el ID de simulación esté configurado en el store
@@ -62,15 +63,20 @@ export function useSimulationRunner(simulationId: string) {
         }
         break;
       
-      case SimulationEventType.SIMULATION_COLLAPSED:
-        // Manejar colapso de simulación
+      case SimulationEventType.SIMULATION_COMPLETED:
         setPlaybackStatus('idle');
-        setError("La simulación ha colapsado. Hay pedidos que no se han atendido a tiempo.");
+        openEndModal('completed', 'La simulación ha finalizado exitosamente.');
+        break;
+      
+      case SimulationEventType.SIMULATION_COLLAPSED:
+        setPlaybackStatus('idle'); 
+        openEndModal('collapsed', 'La simulación ha colapsado. Uno o más pedidos no fueron atendidos a tiempo.');
+        break;
  
         default:
         console.warn(`Tipo de evento no manejado: ${eventType}`);
     }
-  }, [setPlaybackStatus, setError, updateSimulationFromSnapshot]);
+  }, [setPlaybackStatus, setError, updateSimulationFromSnapshot, openEndModal]);
 
   // Función para cargar el snapshot inicial
   const loadInitialSnapshot = useCallback(async () => {

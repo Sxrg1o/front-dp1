@@ -55,7 +55,12 @@ const initialState: AppState = {
     selectedEntityId: null,
     selectedEntityType: null,
     selectedTab: 'leyenda',
-    isSidebarOpen: true
+    isSidebarOpen: true,
+    modal: {
+      isOpen: false,
+      type: null,
+      message: ''
+    }
   }
 };
 
@@ -370,6 +375,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
       setLoading(false);
     }
   },
+
+  openEndModal: (type, message) => set((state) => ({
+    ui: { ...state.ui, modal: { isOpen: true, type, message } }
+  })),
+
+  closeEndModal: () => set((state) => ({
+    ui: { ...state.ui, modal: { ...state.ui.modal, isOpen: false } }
+  })),
 
   // Ya definido arriba
   // setMode: (mode) => set(() => ({ mode })),

@@ -17,7 +17,7 @@ export function RouteLayer({ GRID_SIZE }: RouteLayerProps) {
 
   const mapPointsToString = (points: PointDTO[]): string => {
     return points
-      .map(p => `${(p.x-1) * GRID_SIZE + GRID_SIZE / 2 },${(p.y-1) * GRID_SIZE + GRID_SIZE / 2}`)
+      .map(p => `${(p.x) * GRID_SIZE + GRID_SIZE / 2 },${(p.y) * GRID_SIZE + GRID_SIZE / 2}`)
       .join(' ');
   };
 

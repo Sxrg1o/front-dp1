@@ -25,8 +25,8 @@ export function OrderLayer({ GRID_SIZE, onOrderClick }: OrderLayerProps) {
           key={`pedido-${p.id}`}
           className="absolute z-10 flex items-center justify-center pointer-events-auto cursor-pointer transition-opacity duration-500"
           style={{
-            top: `${(p.y - 1) * GRID_SIZE + 1}px`,
-            left: `${(p.x - 1) * GRID_SIZE + 1}px`,
+            top: `${(p.y) * GRID_SIZE + 1}px`,
+            left: `${(p.x) * GRID_SIZE + 1}px`,
             width: `${GRID_SIZE}px`,
             height: `${GRID_SIZE}px`,
             opacity: p.atendido ? 1 : 0.5,
