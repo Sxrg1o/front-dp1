@@ -34,7 +34,6 @@ export function TruckLayer({ GRID_SIZE, onTruckClick }: TruckLayerProps) {
         const colorName = getTruckColorName(truck.id);
         const iconClass = getTruckIconColorClass(colorName);
         
-        // 👇 AÑADE "return" AQUÍ
         return (
           <div
             key={`truck-${truck.id}`}

@@ -14,8 +14,14 @@ const GRID_COLS = 70
 const GRID_ROWS = 50
 
 export function SimulationMap() {
+  const mode = useAppStore((state) => state.mode);
   // Obtener el tiempo actual directamente del store global para pasarlo a los modales
-  const tiempoActual = useAppStore((state) => state.simulation.tiempoActual)
+  const tiempoActual = useAppStore((state) => 
+  mode === 'simulation' 
+    ? state.simulation.tiempoActual 
+    : state.operational.tiempoActual
+);
+
   
   const {
     zoomLevel, panOffset, GRID_SIZE, mapWidth, mapHeight, mapContainerRef,

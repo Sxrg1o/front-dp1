@@ -31,11 +31,7 @@ export function formatSimulationTime(totalMinutes: number | string): string {
   const hours = Math.floor((minutes % (24 * 60)) / 60);
   const mins = Math.floor(minutes % 60);
   
-  if (days > 0) {
-    return `${days}d ${hours.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m`;
-  } else {
-    return `${hours.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m`;
-  }
+  return `${days}d ${hours.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m`;
 }
 
 /**

@@ -98,6 +98,7 @@ export interface SimulationRequest {
   nombreSimulacion: string;
   fechaInicio: string;
   duracionDias: number;
+  esColapso: boolean;
 }
 
 export interface SimulationStatusDTO {
