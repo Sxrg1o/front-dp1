@@ -34,6 +34,7 @@ export function useOperationalListener() {
         stompClient!.subscribe('/topic/operations', (message) => {
           try {
             const eventData = JSON.parse(message.body);
+            console.log(`Evento recibido: ${eventData.type}`, eventData.payload);
             if (eventData.type === 'SNAPSHOT' && eventData.payload) {
               updateOperationalFromSnapshot(eventData.payload as SimulacionSnapshotDTO);
             }

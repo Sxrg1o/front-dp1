@@ -4,6 +4,7 @@ import { SimulationMap } from "@/components/features/simulation/components/simul
 import { SimulationControls } from "@/components/features/simulation/components/simulation-controls"
 import { formatSimulationTime } from "@/utils/timeUtils"
 import { useAppStore } from "@/store/appStore"
+import { EndSimulationModal } from "@/components/features/simulation/components/EndSimulationModal"
 
 export function SharedMapView() {
   const mode = useAppStore((state) => state.mode);
@@ -74,6 +75,8 @@ export function SharedMapView() {
           <SimulationControls />
         </div>
       </div>
+
+      <EndSimulationModal />
     </div>
   )
 }

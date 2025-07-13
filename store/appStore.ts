@@ -4,7 +4,6 @@ import {
   AppState, 
   AppStore
 } from '@/types/store';
-
 import { AveriaDTO, SimulacionSnapshotDTO, SimulationConfig } from '@/types/types'; // Corregida importación de SimulationConfig
 import { useEffect } from 'react'; // Añadida importación de useEffect
 
@@ -66,7 +65,12 @@ const initialState: AppState = {
     selectedEntityId: null,
     selectedEntityType: null,
     selectedTab: 'leyenda',
-    isSidebarOpen: true
+    isSidebarOpen: true,
+    modal: {
+      isOpen: false,
+      type: null,
+      message: ''
+    }
   }
 };
 
@@ -389,6 +393,15 @@ export const useAppStore = create<AppStore>((set, get) => ({
       setLoading(false);
     }
   },
+  
+  openEndModal: (type, message) => set((state) => ({
+    ui: { ...state.ui, modal: { isOpen: true, type, message } }
+  })),
+
+  closeEndModal: () => set((state) => ({
+    ui: { ...state.ui, modal: { ...state.ui.modal, isOpen: false } }
+  })),
+  
 addBreakdown: async (averia: Omit<AveriaDTO, 'turno'>) => {
   const { simulation, setLoading, setError } = get();
   

@@ -1,7 +1,6 @@
 import { SimulacionSnapshotDTO, SimulationStatusDTO, SimulationRequest, SpeedRequest } from '../types/types';
 import api from '../lib/api-client';
 import { AveriaDTO } from '../types/types'
-
 import { Client } from '@stomp/stompjs';
 
 let stompClient: Client | null = null;
@@ -65,7 +64,6 @@ export async function avanzarMultiplesMinutos(simulationId: string, pasos: numbe
     return ultimoSnapshot as SimulacionSnapshotDTO;
 }
 
-
 export async function addAveriaSimulacion(simulationId: string,averia: AveriaDTO): Promise<AveriaDTO> {
     try {
         const response = await api.post(`/simulacion/${simulationId}/averia`);
@@ -121,19 +119,21 @@ export function connectWebSocket(simulationId: string, callback: SimulationEvent
 
 // Función para desconectar del WebSocket
 export function disconnectWebSocket(): void {
-    if (stompClient && stompClient.connected) {
-        // Desuscribir de todos los tópicos
-        activeSubscriptions.forEach(subscription => {
-            subscription.unsubscribe();
-        });
-        activeSubscriptions = [];
-
-        // Desconectar cliente
-        stompClient.deactivate();
-        console.log('Desconectado de WebSocket');
-    }
+    console.log('Iniciando desconexión del WebSocket, esperando 5 segundos...');
     
-    stompClient = null;
+    setTimeout(() => {
+        if (stompClient && stompClient.connected) {
+            activeSubscriptions.forEach(subscription => {
+                subscription.unsubscribe();
+            });
+            activeSubscriptions = [];
+
+            stompClient.deactivate();
+            console.log('Desconectado de WebSocket después de 5 segundos');
+        }
+        
+        stompClient = null;
+    }, 2000);
 }
 
 // Función para pausar la simulación

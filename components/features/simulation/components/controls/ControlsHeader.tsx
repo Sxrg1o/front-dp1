@@ -9,7 +9,6 @@ import { useState, useEffect } from "react"
 import { camionesService } from '@/services/camiones-service'
 import { TruckDTO } from "@/types/types"
 
-
 interface ControlsHeaderProps {
   isRunning: boolean
   isPaused: boolean
@@ -27,12 +26,13 @@ export function ControlsHeader({
   isPaused,
   onPlay,
   onPause,
-  onStop,
+  onStop, 
   onStepForward,  
   onAddBreakdown,
   onSpeedChange,
   currentSpeed = 300    
-
+  onSpeedChange,
+  currentSpeed = 300
 }: ControlsHeaderProps) {
 
   const [selectedVehicle, setSelectedVehicle] = useState('')
@@ -59,7 +59,6 @@ export function ControlsHeader({
     setSpeed(value);
     onSpeedChange(Number(value));
   };  
-
 
   return (
     <CardHeader className="bg-blue-100 rounded-t-lg py-4">
@@ -98,22 +97,9 @@ export function ControlsHeader({
           <Square className="h-4 w-4" />
         </Button>
         
-        
         <div className="w-px h-6 bg-gray-300 mx-1" />
-
-        <Button 
-          size="sm" 
-          variant="outline" 
-          title="Avanzar un paso" 
-          onClick={onStepForward}
-          disabled={isRunning && !isPaused}
-        >
-          <SkipForward className="h-4 w-4" />
-        </Button>
-
-      </div>
-
-      <div className="flex items-center gap-2">
+        
+        <div className="flex items-center gap-2">
           
           <Select 
             value={speed} 
@@ -184,7 +170,6 @@ export function ControlsHeader({
         </Select>
 
       </div>
-
     </CardHeader>
   );
 }

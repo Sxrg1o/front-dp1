@@ -1,3 +1,8 @@
+export interface PointDTO {
+  x: number
+  y: number
+}
+
 export interface TruckDTO {
   id: string
   x: number
@@ -6,6 +11,7 @@ export interface TruckDTO {
   combustibleDisponible: number
   status: string
   consumoAcumulado: number
+  ruta: PointDTO[]
 }
 
 export interface Pedido {
@@ -72,13 +78,11 @@ export interface BloqueoDTO {
   nodes: { x: number; y: number }[]
 }
 
-
 export interface AveriaDTO {
     turno: string;           
     codigoVehiculo: string; 
     tipoIncidente: string; 
 }
-
 
 // Interfaz para los datos de rutas asignadas a camiones
 export interface RutaDTO {
@@ -86,7 +90,6 @@ export interface RutaDTO {
   nodosRuta: { x: number; y: number }[]
   pedidosIds: number[]
   tiempoEstimado: number
-
 }
 
 export interface SimulacionSnapshotDTO {
@@ -102,6 +105,7 @@ export interface SimulationRequest {
   nombreSimulacion: string;
   fechaInicio: string;
   duracionDias: number;
+  esColapso: boolean;
 }
 
 export interface SimulationStatusDTO {

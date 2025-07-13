@@ -2,8 +2,8 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useAppStore } from "@/store/appStore" // Importar el store global
 import { ControlsHeader, VehiclesList, OrdersList, LegendView, BreakdownsList , TanksList} from "./controls"
+import { useAppStore } from "@/store/appStore"
 import { modifySpeed } from "@/services/simulacion-service"
 
 export function SimulationControls() {
@@ -16,6 +16,7 @@ export function SimulationControls() {
   )
 
   const { startSimulation, pauseSimulation, stopSimulation, stepForward , addBreakdown } = useAppStore()
+
   const isRunning = playbackStatus === 'running'
   const isPaused = playbackStatus === 'paused'
 
@@ -52,7 +53,6 @@ export function SimulationControls() {
       <CardContent className="p-0">
         <Tabs defaultValue="leyenda" className="w-full">
         <TabsList className="grid w-full grid-cols-4 rounded-none">
-
             <TabsTrigger value="vehiculos" className="text-sm">
               VEHÍCULOS
             </TabsTrigger>

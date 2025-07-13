@@ -3,19 +3,25 @@
 import { useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ZoomIn, ZoomOut } from "lucide-react"
+import { Route, ZoomIn, ZoomOut } from "lucide-react"
 import { useMapInteraction } from "@/hooks/use-map-interaction"
-import { TruckLayer, TankLayer, OrderLayer, BlockageLayer } from "./map/layers"
+import { TruckLayer, TankLayer, OrderLayer, BlockageLayer, RouteLayer } from "./map/layers"
 import { TruckModal, TankModal, BreakdownModal, OrderModal, useMapModals } from "./map/modals"
 import { useAppStore } from "@/store/appStore"
 
 const BASE_GRID_SIZE = 15 
-const GRID_COLS = 70 
-const GRID_ROWS = 50
+const GRID_COLS = 71 
+const GRID_ROWS = 51
 
 export function SimulationMap() {
+  const mode = useAppStore((state) => state.mode);
   // Obtener el tiempo actual directamente del store global para pasarlo a los modales
-  const tiempoActual = useAppStore((state) => state.simulation.tiempoActual)
+  const tiempoActual = useAppStore((state) => 
+  mode === 'simulation' 
+    ? state.simulation.tiempoActual 
+    : state.operational.tiempoActual
+);
+
   
   const {
     zoomLevel, panOffset, GRID_SIZE, mapWidth, mapHeight, mapContainerRef,
@@ -102,6 +108,10 @@ export function SimulationMap() {
                 GRID_SIZE={GRID_SIZE}
                 GRID_COLS={GRID_COLS}
                 GRID_ROWS={GRID_ROWS}
+              />
+
+              <RouteLayer 
+                GRID_SIZE={GRID_SIZE}
               />
               
               <OrderLayer 

@@ -43,6 +43,11 @@ export interface UIState {
   selectedEntityType: 'pedido' | 'camion' | 'tanque' | 'bloqueo' | null;
   selectedTab: string;
   isSidebarOpen: boolean;
+  modal: {
+    isOpen: boolean;
+    type: 'completed' | 'collapsed' | null;
+    message: string;
+  };
 }
 
 // Tipo para los modos de la aplicación
@@ -89,6 +94,8 @@ export interface UIActions {
   toggleSidebar: () => void;
   setSidebarOpen: (isOpen: boolean) => void;
   setMode: (mode: AppMode) => void;
+  openEndModal: (type: 'completed' | 'collapsed', message: string) => void;
+  closeEndModal: () => void;
 }
 
 // Acciones de la API de la simulación
