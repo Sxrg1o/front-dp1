@@ -62,7 +62,6 @@ export function useSimulationRunner(simulationId: string) {
           updateSimulationFromSnapshot(data);
         }
         break;
-      
       case SimulationEventType.SIMULATION_COMPLETED:
         setPlaybackStatus('idle');
         openEndModal('completed', 'La simulación ha finalizado exitosamente.');
@@ -77,6 +76,7 @@ export function useSimulationRunner(simulationId: string) {
         console.warn(`Tipo de evento no manejado: ${eventType}`);
     }
   }, [setPlaybackStatus, setError, updateSimulationFromSnapshot, openEndModal]);
+
 
   // Función para cargar el snapshot inicial
   const loadInitialSnapshot = useCallback(async () => {

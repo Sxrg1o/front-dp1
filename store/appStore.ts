@@ -4,15 +4,23 @@ import {
   AppState, 
   AppStore
 } from '@/types/store';
+import { AveriaDTO, SimulacionSnapshotDTO, SimulationConfig } from '@/types/types'; // Corregida importación de SimulationConfig
+import { useEffect } from 'react'; // Añadida importación de useEffect
+
 import {
   avanzarUnMinuto,
   avanzarMultiplesMinutos,
   obtenerSnapshot,
+  addAveriaSimulacion,
   ejecutarSimulacion,
   pausarSimulacion,
   reanudarSimulacion,
   detenerSimulacion
 } from '@/services/simulacion-service';
+
+import api from '../lib/api-client';
+
+import { averiasService } from '@/services/averias-service';
 
 // Estado inicial de la aplicación
 const initialState: AppState = {
@@ -42,6 +50,7 @@ const initialState: AppState = {
     camiones: [],
     tanques: [],
     bloqueos: [],
+    averias: [],
     activeBlockageIds: [] 
   },
   operationalData: {
@@ -49,6 +58,7 @@ const initialState: AppState = {
     camiones: [],
     tanques: [],
     bloqueos: [],
+    averias: [],
     activeBlockageIds: []
   },
   ui: {
@@ -152,9 +162,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
       simulationData: {
         ...state.simulationData,
         pedidos: snapshot.pedidos || [],
-        camiones: snapshot.camiones || [],
+        camiones: (snapshot.camiones || []).map((c: any) => ({
+          ...c,
+          status: c.status ?? c.estado ?? ""
+        })),
         tanques: tanquesDTO,
-        bloqueos: snapshot.bloqueos || []
+        bloqueos: snapshot.bloqueos || [],
+        averias: snapshot.averias || []
       }
     }));
 
@@ -183,9 +197,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
       operationalData: {
         ...state.operationalData,
         pedidos: snapshot.pedidos || [],
-        camiones: snapshot.camiones || [],
+        camiones: (snapshot.camiones || []).map((c: any) => ({
+          ...c,
+          status: c.status ?? c.estado ?? ""
+        })),
         tanques: tanquesDTO,
-        bloqueos: snapshot.bloqueos || []
+        bloqueos: snapshot.bloqueos || [],
+        averias: snapshot.averias || []
       }
     }));
 
@@ -375,7 +393,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       setLoading(false);
     }
   },
-
+  
   openEndModal: (type, message) => set((state) => ({
     ui: { ...state.ui, modal: { isOpen: true, type, message } }
   })),
@@ -383,7 +401,50 @@ export const useAppStore = create<AppStore>((set, get) => ({
   closeEndModal: () => set((state) => ({
     ui: { ...state.ui, modal: { ...state.ui.modal, isOpen: false } }
   })),
+  
+addBreakdown: async (averia: Omit<AveriaDTO, 'turno'>) => {
+  const { simulation, setLoading, setError } = get();
+  
+  if (!simulation.simulationId) {
+    console.error("No hay una simulación activa");
+    return;
+  }
+  
+  setLoading(true);
+  setError(null);
+  
+  try {
+    const date = new Date(simulation.tiempoActual);
+    const minutos = date.getHours() * 60 + date.getMinutes();
+    const minutosDelDia = minutos % 1440;
+    const turno =
+      minutosDelDia < 480 ? 'T1' :
+      minutosDelDia < 960 ? 'T2' :
+      'T3';
+    
+    // Crear el objeto con el turno
+    const averiaConTurno = {
+      ...averia,
+      turno
+    };
 
+    // Hacer la llamada al backend
+    const response = await api.post(`/simulacion/${simulation.simulationId}/averia`, averiaConTurno);
+    
+    // Actualizar el estado
+    set((state) => ({
+      simulationData: {
+        ...state.simulationData,
+        averias: [...state.simulationData.averias, response.data]
+      }
+    }));
+  } catch (error) {
+    console.error("❌ Error al declarar avería:", error);
+    setError("Error al declarar avería");
+  } finally {
+    setLoading(false);
+  }
+},
   // Ya definido arriba
   // setMode: (mode) => set(() => ({ mode })),
 }));

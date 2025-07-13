@@ -29,6 +29,11 @@ export function LegendView() {
             <div className="text-sm font-medium">Vehículo: TD</div>
             <div className="text-xs text-gray-600">Capacidad: 5</div>
           </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <Truck className="text-orange-600 mx-auto mb-1" size={28} />
+            <div className="text-sm font-medium">Vehículo Averiado</div>
+            <div className="text-xs text-gray-600">Estado: BREAKDOWN</div>
+          </div>
         </div>
       </div>
 

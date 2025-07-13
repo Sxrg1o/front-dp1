@@ -19,7 +19,6 @@ export function TruckLayer({ GRID_SIZE, onTruckClick }: TruckLayerProps) {
       : state.operationalData.camiones
   )
 
-
   const getTruckType = (id: string) => {
     if (id.startsWith("TA")) return "TA"
     if (id.startsWith("TB")) return "TB"

@@ -1,5 +1,6 @@
 import { SimulacionSnapshotDTO, SimulationStatusDTO, SimulationRequest, SpeedRequest } from '../types/types';
 import api from '../lib/api-client';
+import { AveriaDTO } from '../types/types'
 import { Client } from '@stomp/stompjs';
 
 let stompClient: Client | null = null;
@@ -61,6 +62,15 @@ export async function avanzarMultiplesMinutos(simulationId: string, pasos: numbe
         ultimoSnapshot = await avanzarUnMinuto(simulationId);
     }
     return ultimoSnapshot as SimulacionSnapshotDTO;
+}
+
+export async function addAveriaSimulacion(simulationId: string,averia: AveriaDTO): Promise<AveriaDTO> {
+    try {
+        const response = await api.post(`/simulacion/${simulationId}/averia`);
+        return response.data;
+    } catch (error) {
+        throw new Error("Error al agregar averia a la simulación")
+    }
 }
 
 // Función para conectar al WebSocket
