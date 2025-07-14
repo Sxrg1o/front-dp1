@@ -125,3 +125,9 @@ export interface SimulationConfig {
 export interface SpeedRequest {
   delayMs: number;
 }
+
+export interface ReporteDTO {
+  totalPedidosEntregados: number;
+  totalDistanciaRecorrida: number;
+  pedidoColapso: string | null;
+}
