@@ -2,36 +2,45 @@
 
 import { useState } from "react"
 import { PedidoDTO } from "@/types/types"
-import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { TabsContent } from "@/components/ui/tabs"
-import { useAppStore } from "@/store/appStore" // Importar el store global
+import { useAppStore } from "@/store/appStore"
+import { formatSimulationTime } from "@/utils/timeUtils"
 
 export function OrdersList() {
   const [searchOrder, setSearchOrder] = useState("")
-
-  // Obtener el modo actual
   const mode = useAppStore((state) => state.mode);
+
+  const tiempoActual = useAppStore((state) => 
+    mode === 'simulation' 
+      ? state.simulation.tiempoActual 
+      : state.operational.tiempoActual
+  );
   
-  // Obtener los pedidos según el modo
   const pedidos = useAppStore((state) => 
     mode === 'simulation' 
       ? state.simulationData.pedidos 
       : state.operationalData.pedidos
-  )
+  );
   
-  // Filtrar para mostrar solo pedidos pendientes (no atendidos)
-  const pendingPedidos = pedidos.filter(p => !p.atendido)
-
-  const getPedidoBadge = (atendido: boolean) => {
-    return <Badge variant={atendido ? "secondary" : "destructive"}>{atendido ? "Atendido" : "Pendiente"}</Badge>
-  }
+  const pendingPedidos = pedidos.filter(p => !p.atendido);
 
   const filteredOrders = pendingPedidos.filter((order) =>
     order.id.toString().includes(searchOrder.toLowerCase()) ||
     order.idCliente.toLowerCase().includes(searchOrder.toLowerCase())
-  )
+  );
+
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    const fechaLimiteA = new Date(a.tiempoLimite).getTime();
+    const fechaLimiteB = new Date(b.tiempoLimite).getTime();
+    const fechaActual = new Date(tiempoActual).getTime();
+    
+    const tiempoRestanteA = fechaLimiteA - fechaActual;
+    const tiempoRestanteB = fechaLimiteB - fechaActual;
+
+    return tiempoRestanteA - tiempoRestanteB;
+  });
 
   return (
     <TabsContent value="pedidos" className="p-4">
@@ -50,27 +59,37 @@ export function OrdersList() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-xs">Cod.</TableHead>
-                <TableHead className="text-xs text-center">Cliente</TableHead>
+                <TableHead className="text-xs text-center">Posición</TableHead>
                 <TableHead className="text-xs text-center">Cant.</TableHead>
-                <TableHead className="text-xs text-center">Estado</TableHead>
+                <TableHead className="text-xs text-center">Tiempo rest.</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredOrders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="text-xs font-medium">{order.id}</TableCell>
-                  <TableCell className="text-xs text-center">{order.idCliente}</TableCell>
-                  <TableCell className="text-xs text-center">{order.volumen}</TableCell>
-                  <TableCell className="text-xs text-center">{getPedidoBadge(order.atendido)}</TableCell>
-                </TableRow>
-              ))}
+              {sortedOrders.map((order) => {
+                const fechaLimite = new Date(order.tiempoLimite).getTime();
+                const fechaActual = new Date(tiempoActual).getTime();
+                const tiempoRestante = !isNaN(fechaActual) && !isNaN(fechaLimite)
+                  ? Math.floor((fechaLimite - fechaActual) / (1000 * 60))
+                  : 0;
+                const estaVencido = tiempoRestante <= 0;
+
+                return (
+                  <TableRow key={`${order.id}-${order.tiempoLimite}`}>
+                    <TableCell className="text-xs font-medium">{order.id}</TableCell>
+                    <TableCell className="text-xs text-center">{order.x}, {order.y}</TableCell>
+                    <TableCell className="text-xs text-center">{order.volumen}</TableCell>
+                    <TableCell className={`text-xs text-center font-medium ${estaVencido ? "text-red-600" : ""}`}>
+                      {estaVencido ? "00d00h00m" : formatSimulationTime(tiempoRestante)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
 
         <div className="text-xs text-gray-500 text-center">
-          {filteredOrders.length} de {pendingPedidos.length} pedidos pendientes 
-          {pedidos.length > pendingPedidos.length && ` (${pedidos.length - pendingPedidos.length} atendidos)`}
+          {filteredOrders.length} de {pendingPedidos.length} pedidos pendientes
         </div>
       </div>
     </TabsContent>

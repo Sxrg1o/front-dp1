@@ -4,15 +4,20 @@ import {
   AppState, 
   AppStore
 } from '@/types/store';
+import { AveriaDTO } from '@/types/types'; 
+
 import {
   avanzarUnMinuto,
   avanzarMultiplesMinutos,
   obtenerSnapshot,
+  addAveriaSimulacion,
   ejecutarSimulacion,
   pausarSimulacion,
   reanudarSimulacion,
   detenerSimulacion
 } from '@/services/simulacion-service';
+
+import api from '../lib/api-client';
 
 // Estado inicial de la aplicación
 const initialState: AppState = {
@@ -42,6 +47,7 @@ const initialState: AppState = {
     camiones: [],
     tanques: [],
     bloqueos: [],
+    averias: [],
     activeBlockageIds: [] 
   },
   operationalData: {
@@ -49,13 +55,19 @@ const initialState: AppState = {
     camiones: [],
     tanques: [],
     bloqueos: [],
+    averias: [],
     activeBlockageIds: []
   },
   ui: {
     selectedEntityId: null,
     selectedEntityType: null,
     selectedTab: 'leyenda',
-    isSidebarOpen: true
+    isSidebarOpen: true,
+    modal: {
+      isOpen: false,
+      type: null,
+      message: ''
+    }
   }
 };
 
@@ -147,9 +159,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
       simulationData: {
         ...state.simulationData,
         pedidos: snapshot.pedidos || [],
-        camiones: snapshot.camiones || [],
+        camiones: (snapshot.camiones || []).map((c: any) => ({
+          ...c,
+          status: c.status ?? c.estado ?? ""
+        })),
         tanques: tanquesDTO,
-        bloqueos: snapshot.bloqueos || []
+        bloqueos: snapshot.bloqueos || [],
+        averias: snapshot.averias || []
       }
     }));
 
@@ -178,9 +194,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
       operationalData: {
         ...state.operationalData,
         pedidos: snapshot.pedidos || [],
-        camiones: snapshot.camiones || [],
+        camiones: (snapshot.camiones || []).map((c: any) => ({
+          ...c,
+          status: c.status ?? c.estado ?? ""
+        })),
         tanques: tanquesDTO,
-        bloqueos: snapshot.bloqueos || []
+        bloqueos: snapshot.bloqueos || [],
+        averias: snapshot.averias || []
       }
     }));
 
@@ -370,7 +390,77 @@ export const useAppStore = create<AppStore>((set, get) => ({
       setLoading(false);
     }
   },
+  
+  openEndModal: (type, message) => set((state) => ({
+    ui: { ...state.ui, modal: { isOpen: true, type, message } }
+  })),
 
+  closeEndModal: () => set((state) => ({
+    ui: { ...state.ui, modal: { ...state.ui.modal, isOpen: false } }
+  })),
+  
+  addBreakdown: async (averia: Omit<AveriaDTO, 'turno'>) => {
+    const { mode, simulation, operational, setLoading, setError } = get();
+    
+    // Verificar si hay una simulación o operación activa según el modo
+    const currentState = mode === 'simulation' ? simulation : operational;
+    
+    if (!currentState.simulationId && mode === 'simulation') {
+      console.error("No hay una simulación activa");
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Calcular el turno basado en el tiempo actual
+      const date = new Date(currentState.tiempoActual);
+      const minutos = date.getHours() * 60 + date.getMinutes();
+      const minutosDelDia = minutos % 1440;
+      const turno =
+        minutosDelDia < 480 ? 'T1' :
+        minutosDelDia < 960 ? 'T2' :
+        'T3';
+      
+      // Crear el objeto con el turno
+      const averiaConTurno = {
+        ...averia,
+        turno
+      };
+
+      // Diferenciar entre modo simulación y operaciones
+      if (mode === 'simulation') {
+        // En modo simulación, usar el endpoint específico de simulación
+        const response = await api.post(`/simulacion/${currentState.simulationId}/averia`, averiaConTurno);
+        
+        // Actualizar el estado de simulación
+        set((state) => ({
+          simulationData: {
+            ...state.simulationData,
+            averias: [...state.simulationData.averias, response.data]
+          }
+        }));
+      } else {
+        // En modo operaciones, usar el endpoint general de averías
+        const response = await api.post(`/operaciones/averia`, averiaConTurno);
+        
+        // Actualizar el estado de operaciones
+        set((state) => ({
+          operationalData: {
+            ...state.operationalData,
+            averias: [...state.operationalData.averias, response.data]
+          }
+        }));
+      }
+      
+    } catch (error) {
+      console.error(`❌ Error al declarar avería en modo ${mode}:`, error);
+      setError(`Error al declarar avería en modo ${mode}`);
+    } finally {
+      setLoading(false);
+    }
+  },
   // Ya definido arriba
   // setMode: (mode) => set(() => ({ mode })),
 }));

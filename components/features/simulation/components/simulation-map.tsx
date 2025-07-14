@@ -10,8 +10,8 @@ import { TruckModal, TankModal, BreakdownModal, OrderModal, useMapModals } from 
 import { useAppStore } from "@/store/appStore"
 
 const BASE_GRID_SIZE = 15 
-const GRID_COLS = 70 
-const GRID_ROWS = 50
+const GRID_COLS = 71 
+const GRID_ROWS = 51
 
 export function SimulationMap() {
   const mode = useAppStore((state) => state.mode);

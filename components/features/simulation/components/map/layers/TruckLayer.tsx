@@ -19,7 +19,6 @@ export function TruckLayer({ GRID_SIZE, onTruckClick }: TruckLayerProps) {
       : state.operationalData.camiones
   )
 
-
   const getTruckType = (id: string) => {
     if (id.startsWith("TA")) return "TA"
     if (id.startsWith("TB")) return "TB"
@@ -31,7 +30,7 @@ export function TruckLayer({ GRID_SIZE, onTruckClick }: TruckLayerProps) {
   return (
     <>
       {camiones?.map((truck) => {
-        const colorName = getTruckColorName(truck.id);
+        const colorName = getTruckColorName(truck.id, truck.status);
         const iconClass = getTruckIconColorClass(colorName);
         
         return (
@@ -39,8 +38,8 @@ export function TruckLayer({ GRID_SIZE, onTruckClick }: TruckLayerProps) {
             key={`truck-${truck.id}`}
             className="absolute cursor-pointer hover:scale-110 transition-transform z-30 flex items-center justify-center pointer-events-auto"
             style={{
-              top: `${(truck.y - 1) * GRID_SIZE + 1}px`,
-              left: `${(truck.x - 1) * GRID_SIZE + 1}px`,
+              top: `${(truck.y) * GRID_SIZE + 1}px`,
+              left: `${(truck.x) * GRID_SIZE + 1}px`,
               width: `${GRID_SIZE}px`,
               height: `${GRID_SIZE}px`,
               imageRendering: "crisp-edges",

@@ -2,8 +2,8 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ControlsHeader, VehiclesList, OrdersList, LegendView, BreakdownsList , TanksList} from "./controls"
 import { useAppStore } from "@/store/appStore"
-import { ControlsHeader, VehiclesList, OrdersList, LegendView, TanksList } from "./controls"
 import { modifySpeed } from "@/services/simulacion-service"
 
 export function SimulationControls() {
@@ -14,9 +14,9 @@ export function SimulationControls() {
       ? state.simulation.playbackStatus 
       : state.operational.playbackStatus
   )
-  
-  const { startSimulation, pauseSimulation, stopSimulation, stepForward } = useAppStore()
-  
+
+  const { startSimulation, pauseSimulation, stopSimulation, stepForward , addBreakdown } = useAppStore()
+
   const isRunning = playbackStatus === 'running'
   const isPaused = playbackStatus === 'paused'
 
@@ -31,7 +31,6 @@ export function SimulationControls() {
 
   return (
     <Card className="h-lv py-0 gap-0">
-      
       {mode === 'simulation' && (
         <ControlsHeader
           isRunning={isRunning}
@@ -41,12 +40,19 @@ export function SimulationControls() {
           onStop={stopSimulation}
           onStepForward={stepForward}
           onSpeedChange={handleSpeedChange}
+          onAddBreakdown={(codigoVehiculo, tipoIncidente) => 
+            addBreakdown({
+              codigoVehiculo,
+              tipoIncidente
+            })          
+          }
         />
       )}
+      
 
       <CardContent className="p-0">
         <Tabs defaultValue="leyenda" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 rounded-none">
+        <TabsList className="grid w-full grid-cols-4 rounded-none">
             <TabsTrigger value="vehiculos" className="text-sm">
               VEHÍCULOS
             </TabsTrigger>
@@ -56,12 +62,14 @@ export function SimulationControls() {
             <TabsTrigger value="pedidos" className="text-sm">
               PEDIDOS
             </TabsTrigger>
+            
             <TabsTrigger value="leyenda" className="text-sm">
               LEYENDA
             </TabsTrigger>
           </TabsList>
 
           <LegendView />
+          <BreakdownsList />
           <VehiclesList />
           <OrdersList />
           <TanksList />
