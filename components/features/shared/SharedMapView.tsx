@@ -20,6 +20,12 @@ export function SharedMapView() {
   const { tiempoActual, config } = currentState;
   const { pedidos, camiones } = currentData;
 
+  const tiempoFecha = new Date(tiempoActual);
+  const tiempoInicio = new Date(config?.fechaInicio || tiempoFecha);
+
+  const diffMs = tiempoFecha.getTime() - tiempoInicio.getTime();
+  const tiempoSimulacion = Math.floor(diffMs / (1000 * 60) - 5 * 60);
+
   // Funciones auxiliares para formateo
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -43,10 +49,13 @@ export function SharedMapView() {
   const getDateInfo = () => {
     if (!config) return ""
     
+    const fechaInicioMasUnMinuto = new Date(config.fechaInicio);
+    fechaInicioMasUnMinuto.setMinutes(fechaInicioMasUnMinuto.getMinutes() + 60*5);
+    
     if (config.escenario === 'semanal' && config.fechaFinal) {
-      return `Fecha inicio: ${formatDate(config.fechaInicio)} - Fecha fin: ${formatDate(config.fechaFinal)}`
+      return `Fecha inicio: ${formatDate(fechaInicioMasUnMinuto.toISOString())} - Fecha fin: ${formatDate(config.fechaFinal)}`
     } else {
-      return `Fecha inicio: ${formatDate(config.fechaInicio)}`
+      return `Fecha inicio: ${formatDate(fechaInicioMasUnMinuto.toISOString())}`
     }
   }
   
@@ -58,9 +67,7 @@ export function SharedMapView() {
           {mode === 'simulation' && (
             <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
               <span>{getDateInfo()}</span>
-              <span>Tiempo transcurrido: {formatSimulationTime(tiempoActual)}</span>
-              <span>Flota: {camiones.length} 🚛</span>
-              <span>Pedidos pendientes: {pedidos.filter(p => !p.atendido).length}</span>
+              <span>Tiempo transcurrido: {formatSimulationTime(tiempoSimulacion)}</span>
             </div>
           )}
         </div>

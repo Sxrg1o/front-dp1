@@ -137,7 +137,7 @@ export function ControlsHeader({
           //disabled={isRunning && !isPaused}
           disabled={false}
         >
-          <SelectTrigger className="w-32">
+          <SelectTrigger className="w-32 bg-white">
             <SelectValue placeholder="Vehículo" />
           </SelectTrigger>
           <SelectContent>
@@ -155,7 +155,7 @@ export function ControlsHeader({
           //disabled={isRunning && !isPaused}
           disabled={false}
         >
-          <SelectTrigger className="w-36">
+          <SelectTrigger className="w-36 bg-white">
             <SelectValue placeholder="Incidente" />
           </SelectTrigger>
           <SelectContent>

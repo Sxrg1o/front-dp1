@@ -17,7 +17,7 @@ export function RouteLayer({ GRID_SIZE }: RouteLayerProps) {
 
   const mapPointsToString = (points: PointDTO[]): string => {
     return points
-      .map(p => `${(p.x) * GRID_SIZE + GRID_SIZE / 2 },${(p.y) * GRID_SIZE + GRID_SIZE / 2}`)
+      .map(p => `${(p.x) * GRID_SIZE + GRID_SIZE / 2 +1},${(p.y) * GRID_SIZE + GRID_SIZE / 2 +1}`)
       .join(' ');
   };
 
@@ -31,7 +31,7 @@ export function RouteLayer({ GRID_SIZE }: RouteLayerProps) {
           return null;
         }
 
-        const colorName = getTruckColorName(truck.id);
+        const colorName = getTruckColorName(truck.id, truck.status);
         const strokeColor = getRouteStrokeColor(colorName);
         return (
           <polyline

@@ -28,8 +28,8 @@ export function BlockageLayer({
             key={`${b.id}-${idx}`}
             className="absolute bg-red-500 pointer-events-none"
             style={{
-              left: `${(pt.x ) * GRID_SIZE}px`,
-              top: `${(pt.y) * GRID_SIZE}px`,
+              left: `${(pt.x ) * GRID_SIZE + 1}px`,
+              top: `${(pt.y) * GRID_SIZE + 1}px`,
               width: `${GRID_SIZE}px`,
               height: `${GRID_SIZE}px`,
             }}
@@ -46,10 +46,10 @@ export function BlockageLayer({
           b.nodes.slice(0, -1).map((pt, i) => {
             const next = b.nodes?.[i + 1]; 
             if (!next) return null; 
-            const x1 = (pt.x) * GRID_SIZE + GRID_SIZE / 2;
-            const y1 = (pt.y) * GRID_SIZE + GRID_SIZE / 2;
-            const x2 = (next.x) * GRID_SIZE + GRID_SIZE / 2;
-            const y2 = (next.y) * GRID_SIZE + GRID_SIZE / 2;
+            const x1 = ((pt.x) * GRID_SIZE + GRID_SIZE / 2)+1;
+            const y1 = ((pt.y) * GRID_SIZE + GRID_SIZE / 2)+1;
+            const x2 = ((next.x) * GRID_SIZE + GRID_SIZE / 2)+1;
+            const y2 = ((next.y) * GRID_SIZE + GRID_SIZE / 2)+1;
             return (
               <line
                 key={`${b.id}-${i}`}

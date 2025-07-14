@@ -30,7 +30,7 @@ export function TruckLayer({ GRID_SIZE, onTruckClick }: TruckLayerProps) {
   return (
     <>
       {camiones?.map((truck) => {
-        const colorName = getTruckColorName(truck.id);
+        const colorName = getTruckColorName(truck.id, truck.status);
         const iconClass = getTruckIconColorClass(colorName);
         
         return (

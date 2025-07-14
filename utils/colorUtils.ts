@@ -1,7 +1,8 @@
 /**
  * Determina el nombre del color basado en el prefijo del ID del camión.
  */
-export const getTruckColorName = (id: string): string => {
+export const getTruckColorName = (id: string, status: string): string => {
+  if (status === 'BREAKDOWN') return "orange"; 
   if (id.startsWith("TA")) return "green";
   if (id.startsWith("TB")) return "yellow";
   if (id.startsWith("TC")) return "blue";
@@ -18,6 +19,7 @@ export const getTruckIconColorClass = (colorName: string): string => {
     yellow: "text-yellow-600",
     blue: "text-blue-600",
     purple: "text-purple-600",
+    orange: "text-orange-600",
     gray: "text-gray-600"
   };
   return colorMap[colorName as keyof typeof colorMap] || "text-gray-600";

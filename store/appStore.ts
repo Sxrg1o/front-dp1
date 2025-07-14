@@ -4,8 +4,7 @@ import {
   AppState, 
   AppStore
 } from '@/types/store';
-import { AveriaDTO, SimulacionSnapshotDTO, SimulationConfig } from '@/types/types'; // Corregida importación de SimulationConfig
-import { useEffect } from 'react'; // Añadida importación de useEffect
+import { AveriaDTO } from '@/types/types'; 
 
 import {
   avanzarUnMinuto,
@@ -19,8 +18,6 @@ import {
 } from '@/services/simulacion-service';
 
 import api from '../lib/api-client';
-
-import { averiasService } from '@/services/averias-service';
 
 // Estado inicial de la aplicación
 const initialState: AppState = {
@@ -402,49 +399,68 @@ export const useAppStore = create<AppStore>((set, get) => ({
     ui: { ...state.ui, modal: { ...state.ui.modal, isOpen: false } }
   })),
   
-addBreakdown: async (averia: Omit<AveriaDTO, 'turno'>) => {
-  const { simulation, setLoading, setError } = get();
-  
-  if (!simulation.simulationId) {
-    console.error("No hay una simulación activa");
-    return;
-  }
-  
-  setLoading(true);
-  setError(null);
-  
-  try {
-    const date = new Date(simulation.tiempoActual);
-    const minutos = date.getHours() * 60 + date.getMinutes();
-    const minutosDelDia = minutos % 1440;
-    const turno =
-      minutosDelDia < 480 ? 'T1' :
-      minutosDelDia < 960 ? 'T2' :
-      'T3';
+  addBreakdown: async (averia: Omit<AveriaDTO, 'turno'>) => {
+    const { mode, simulation, operational, setLoading, setError } = get();
     
-    // Crear el objeto con el turno
-    const averiaConTurno = {
-      ...averia,
-      turno
-    };
+    // Verificar si hay una simulación o operación activa según el modo
+    const currentState = mode === 'simulation' ? simulation : operational;
+    
+    if (!currentState.simulationId && mode === 'simulation') {
+      console.error("No hay una simulación activa");
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Calcular el turno basado en el tiempo actual
+      const date = new Date(currentState.tiempoActual);
+      const minutos = date.getHours() * 60 + date.getMinutes();
+      const minutosDelDia = minutos % 1440;
+      const turno =
+        minutosDelDia < 480 ? 'T1' :
+        minutosDelDia < 960 ? 'T2' :
+        'T3';
+      
+      // Crear el objeto con el turno
+      const averiaConTurno = {
+        ...averia,
+        turno
+      };
 
-    // Hacer la llamada al backend
-    const response = await api.post(`/simulacion/${simulation.simulationId}/averia`, averiaConTurno);
-    
-    // Actualizar el estado
-    set((state) => ({
-      simulationData: {
-        ...state.simulationData,
-        averias: [...state.simulationData.averias, response.data]
+      // Diferenciar entre modo simulación y operaciones
+      if (mode === 'simulation') {
+        // En modo simulación, usar el endpoint específico de simulación
+        const response = await api.post(`/simulacion/${currentState.simulationId}/averia`, averiaConTurno);
+        
+        // Actualizar el estado de simulación
+        set((state) => ({
+          simulationData: {
+            ...state.simulationData,
+            averias: [...state.simulationData.averias, response.data]
+          }
+        }));
+      } else {
+        // En modo operaciones, usar el endpoint general de averías
+        const response = await api.post(`/operaciones/averia`, averiaConTurno);
+        
+        // Actualizar el estado de operaciones
+        set((state) => ({
+          operationalData: {
+            ...state.operationalData,
+            averias: [...state.operationalData.averias, response.data]
+          }
+        }));
       }
-    }));
-  } catch (error) {
-    console.error("❌ Error al declarar avería:", error);
-    setError("Error al declarar avería");
-  } finally {
-    setLoading(false);
-  }
-},
+      
+    } catch (error) {
+      console.error(`❌ Error al declarar avería en modo ${mode}:`, error);
+      setError(`Error al declarar avería en modo ${mode}`);
+    } finally {
+      setLoading(false);
+    }
+  },
   // Ya definido arriba
   // setMode: (mode) => set(() => ({ mode })),
 }));

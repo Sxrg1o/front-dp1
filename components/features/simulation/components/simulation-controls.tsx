@@ -62,9 +62,7 @@ export function SimulationControls() {
             <TabsTrigger value="pedidos" className="text-sm">
               PEDIDOS
             </TabsTrigger>
-            <TabsTrigger value="averias" className="text-sm">
-              AVERÍAS
-            </TabsTrigger>
+            
             <TabsTrigger value="leyenda" className="text-sm">
               LEYENDA
             </TabsTrigger>
