@@ -74,12 +74,12 @@ export function OrdersList() {
                 const estaVencido = tiempoRestante <= 0;
 
                 return (
-                  <TableRow key={order.id}>
+                  <TableRow key={`${order.id}-${order.tiempoLimite}`}>
                     <TableCell className="text-xs font-medium">{order.id}</TableCell>
                     <TableCell className="text-xs text-center">{order.x}, {order.y}</TableCell>
                     <TableCell className="text-xs text-center">{order.volumen}</TableCell>
                     <TableCell className={`text-xs text-center font-medium ${estaVencido ? "text-red-600" : ""}`}>
-                      {estaVencido ? "Vencido" : formatSimulationTime(tiempoRestante)}
+                      {estaVencido ? "00d00h00m" : formatSimulationTime(tiempoRestante)}
                     </TableCell>
                   </TableRow>
                 );

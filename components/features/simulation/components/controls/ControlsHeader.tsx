@@ -30,9 +30,7 @@ export function ControlsHeader({
   onStepForward,  
   onAddBreakdown,
   onSpeedChange,
-  currentSpeed = 300    
-  onSpeedChange,
-  currentSpeed = 300
+  currentSpeed = 300,    
 }: ControlsHeaderProps) {
 
   const [selectedVehicle, setSelectedVehicle] = useState('')
@@ -62,6 +60,7 @@ export function ControlsHeader({
 
   return (
     <CardHeader className="bg-blue-100 rounded-t-lg py-4">
+      {/* Título y estado */}
       <div className="flex items-center justify-between">
         <CardTitle className="text-lg">Controles simulación</CardTitle>
         <div className="flex items-center gap-2">
@@ -77,7 +76,9 @@ export function ControlsHeader({
         </div>
       </div>
       
-      <div className="flex items-center gap-2 mt-2">
+      {/* Controles principales */}
+      <div className="flex flex-wrap items-center gap-2 mt-2">
+        {/* Botones de reproducción */}
         <Button 
           size="sm" 
           variant="outline" 
@@ -99,30 +100,27 @@ export function ControlsHeader({
         
         <div className="w-px h-6 bg-gray-300 mx-1" />
         
-        <div className="flex items-center gap-2">
-          
-          <Select 
-            value={speed} 
-            onValueChange={handleSpeedChange}
-            disabled={!isRunning}
-          >
-            
-            <SelectTrigger className="w-30 h-8 bg-white">
-              <Gauge className="h-4 w-4 text-black" />
-              <SelectValue placeholder="Velocidad" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="200">Rápido</SelectItem>
-              <SelectItem value="300">Normal</SelectItem>
-              <SelectItem value="500">Lento</SelectItem>
-              <SelectItem value="700">Muy lento</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Control de velocidad */}
+        <Select 
+          value={speed} 
+          onValueChange={handleSpeedChange}
+          disabled={!isRunning}
+        >
+          <SelectTrigger className="w-30 h-8 bg-white">
+            <Gauge className="h-4 w-4 text-black" />
+            <SelectValue placeholder="Velocidad" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="200">Rápido</SelectItem>
+            <SelectItem value="300">Normal</SelectItem>
+            <SelectItem value="500">Lento</SelectItem>
+            <SelectItem value="700">Muy lento</SelectItem>
+          </SelectContent>
+        </Select>
 
-      <div className="w-px h-6 bg-gray-300 mx-1" />
-      
-      <div className="flex items-center gap-2">
+        <div className="w-px h-6 bg-gray-300 mx-1" />
+        
+        {/* Controles de avería */}
         <Button 
           size="sm" 
           variant="outline" 
@@ -133,24 +131,22 @@ export function ControlsHeader({
           Agregar avería
         </Button>
 
-
         <Select
           value={selectedVehicle}
           onValueChange={setSelectedVehicle}
           //disabled={isRunning && !isPaused}
           disabled={false}
         >
-          
-        <SelectTrigger className="w-32">
-          <SelectValue placeholder="Vehículo" />
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Vehículo" />
           </SelectTrigger>
-        <SelectContent>
+          <SelectContent>
             {camiones.map((camion) => (
               <SelectItem key={camion.id} value={camion.id}>
                 {camion.id}
               </SelectItem>
             ))}
-        </SelectContent>
+          </SelectContent>
         </Select>
 
         <Select
@@ -168,7 +164,6 @@ export function ControlsHeader({
             <SelectItem value="T3">T3</SelectItem>
           </SelectContent>
         </Select>
-
       </div>
     </CardHeader>
   );
