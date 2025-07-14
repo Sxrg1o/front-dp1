@@ -64,12 +64,12 @@ export function useSimulationRunner(simulationId: string) {
         break;
       case SimulationEventType.SIMULATION_COMPLETED:
         setPlaybackStatus('idle');
-        openEndModal('completed', 'La simulación ha finalizado exitosamente.');
+        openEndModal('completed', 'La simulación ha finalizado exitosamente.', data);
         break;
       
       case SimulationEventType.SIMULATION_COLLAPSED:
         setPlaybackStatus('idle'); 
-        openEndModal('collapsed', 'La simulación ha colapsado. Uno o más pedidos no fueron atendidos a tiempo.');
+        openEndModal('collapsed', 'La simulación ha colapsado. Uno o más pedidos no fueron atendidos a tiempo.', data);
         break;
  
         default:

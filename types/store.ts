@@ -47,6 +47,11 @@ export interface UIState {
     isOpen: boolean;
     type: 'completed' | 'collapsed' | null;
     message: string;
+    reporte?: {
+      totalPedidosEntregados: number;
+      totalDistanciaRecorrida: number;
+      pedidoColapso: string | null;
+    };
   };
 }
 
@@ -94,7 +99,11 @@ export interface UIActions {
   toggleSidebar: () => void;
   setSidebarOpen: (isOpen: boolean) => void;
   setMode: (mode: AppMode) => void;
-  openEndModal: (type: 'completed' | 'collapsed', message: string) => void;
+  openEndModal: (type: 'completed' | 'collapsed', message: string, reporte?: {
+    totalPedidosEntregados: number;
+    totalDistanciaRecorrida: number;
+    pedidoColapso: string | null;
+  }) => void;
   closeEndModal: () => void;
 }
 

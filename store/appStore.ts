@@ -391,8 +391,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
   
-  openEndModal: (type, message) => set((state) => ({
-    ui: { ...state.ui, modal: { isOpen: true, type, message } }
+  openEndModal: (type, message, reporte = undefined) => set((state) => ({
+    ui: { ...state.ui, modal: { isOpen: true, type, message, reporte } }
   })),
 
   closeEndModal: () => set((state) => ({
