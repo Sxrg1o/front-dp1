@@ -28,6 +28,7 @@ export function VehiclesList() {
       RETURNING: "destructive",
       BREAKDOWN: "warning", // Nuevo estado con variante warning
       UNAVAILABLE: "outline",  // Nuevo estado con variante outline
+      MAINTENANCE: "warning", // Nuevo estado con variante info
     } as const
 
     return <Badge variant={variants[status as keyof typeof variants] || "default"}>{status}</Badge>

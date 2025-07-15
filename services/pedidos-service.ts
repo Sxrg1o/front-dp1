@@ -8,8 +8,14 @@ export const pedidosService = {
     return response.data
   },
 
-  // Crear nuevo pedido
-  create: async (pedido: Omit<Pedido, 'fechaHoraCreacion'>): Promise<Pedido> => {
+  // Crear nuevo pedido operacional
+  create: async (pedido: {
+    idCliente: string;
+    x: number;
+    y: number;
+    volumen: number;
+    tiempoLimite: string; // ISO string format for LocalDateTime
+  }): Promise<Pedido> => {
     const response = await api.post('/pedidos', pedido)
     return response.data
   },
