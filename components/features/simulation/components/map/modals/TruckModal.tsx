@@ -51,15 +51,19 @@ export function TruckModal({
                 <div>Tipo: {truck ? getTruckType(truck.id) : "N/A"}</div>
                 <div>Nivel de combustible: {truck?.combustibleDisponible.toFixed(2)}</div>
                 <div>Estado: {
-                  truck?.status === "PROCESSING" ? 
-                  <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-800 text-xs font-medium">PROCESSING</span> :
+                  truck?.status === "UNAVAILABLE" ? 
+                  <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-800 text-xs font-medium">UNAVAILABLE</span> :
                   truck?.status === "DELIVERING" ?
                   <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-medium">DELIVERING</span> :
                   truck?.status === "RETURNING" ?
                   <span className="px-2 py-0.5 rounded bg-red-100 text-red-800 text-xs font-medium">RETURNING</span> :
                   truck?.status === "BREAKDOWN" ?
                   <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-medium">BREAKDOWN</span> :      
-                  <span className="px-2 py-0.5 rounded bg-green-100 text-green-800 text-xs font-medium">AVAILABLE</span>
+                  truck?.status === "AVAILABLE" ?
+                  <span className="px-2 py-0.5 rounded bg-green-100 text-green-800 text-xs font-medium">AVAILABLE</span> :
+                  truck?.status === "MAINTENANCE" ?
+                  <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-800 text-xs font-medium">MAINTENANCE</span> :
+                  <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-800 text-xs font-medium">UNKNOWN</span>
                 }</div>
               </div>
             </div>
