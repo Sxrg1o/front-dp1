@@ -73,7 +73,7 @@ export function SimulationMap() {
           <div
             ref={mapContainerRef}
             className="relative overflow-hidden border border-gray-300 rounded-lg cursor-grab active:cursor-grabbing select-none touch-none"
-            style={{ height: "600px" }}
+            style={{ height: "75vh" }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
