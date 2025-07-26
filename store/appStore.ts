@@ -146,6 +146,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
           nombre: t.nombre ?? `Tanque ${idx + 1}`,
           posX: t.posX,
           posY: t.posY,
+          pedidos: t.pedidos || [],
           capacidadTotal: t.capacidadTotal,
           capacidadDisponible: t.capacidadDisponible,
         }))
@@ -181,6 +182,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
           nombre: t.nombre ?? `Tanque ${idx + 1}`,
           posX: t.posX,
           posY: t.posY,
+          pedidos: t.pedidos || [],
           capacidadTotal: t.capacidadTotal,
           capacidadDisponible: t.capacidadDisponible,
         }))
