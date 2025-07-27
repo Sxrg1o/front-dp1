@@ -170,9 +170,6 @@ export function PedidosSection() {
       // Añadir las horas y minutos límite al tiempo actual
       let fechaLimite = addMinutes(addHours(now, newPedido.horasLimite), newPedido.minutosLimite);
       
-      // Restar 5 horas para el ajuste con Java
-      fechaLimite = addHours(fechaLimite, -5);
-      
       // Establecer segundos y milisegundos a 0
       fechaLimite = set(fechaLimite, {
         seconds: 0,
