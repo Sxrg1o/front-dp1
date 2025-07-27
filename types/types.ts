@@ -60,6 +60,8 @@ export interface PedidoDTO {
   tiempoLimite: number
   atendido: boolean
   descartado: boolean
+  programado: boolean
+  enEntrega: boolean
 }
 
 export interface TanqueDTO {

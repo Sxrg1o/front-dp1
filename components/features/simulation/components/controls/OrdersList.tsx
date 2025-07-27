@@ -27,8 +27,8 @@ export function OrdersList() {
   const pendingPedidos = pedidos.filter(p => !p.atendido);
 
   const filteredOrders = pendingPedidos.filter((order) =>
-    order.id.toString().includes(searchOrder.toLowerCase()) ||
-    order.idCliente.toLowerCase().includes(searchOrder.toLowerCase())
+    (order.id.toString().includes(searchOrder.toLowerCase()) ||
+    order.idCliente.toLowerCase().includes(searchOrder.toLowerCase())) 
   );
 
   const sortedOrders = [...filteredOrders].sort((a, b) => {
@@ -62,6 +62,7 @@ export function OrdersList() {
                 <TableHead className="text-xs text-center">Posición</TableHead>
                 <TableHead className="text-xs text-center">Cant.</TableHead>
                 <TableHead className="text-xs text-center">Tiempo rest.</TableHead>
+                <TableHead className="text-xs text-center">Estado</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -80,6 +81,9 @@ export function OrdersList() {
                     <TableCell className="text-xs text-center">{order.volumen}</TableCell>
                     <TableCell className={`text-xs text-center font-medium ${estaVencido ? "text-red-600" : ""}`}>
                       {estaVencido ? "00d00h00m" : formatSimulationTime(tiempoRestante)}
+                    </TableCell>
+                    <TableCell className="text-xs text-center">
+                      {order.enEntrega ? "En Entrega" : order.programado ? "Programado" : "Pendiente"}
                     </TableCell>
                   </TableRow>
                 );
