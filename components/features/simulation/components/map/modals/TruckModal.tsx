@@ -50,17 +50,32 @@ export function TruckModal({
               <div className="text-sm text-gray-600 space-y-1">
                 <div>Tipo: {truck ? getTruckType(truck.id) : "N/A"}</div>
                 <div>Nivel de combustible: {truck?.combustibleDisponible.toFixed(2)}</div>
+                <div>GLP disponible: {truck?.disponible.toFixed(2)}</div>
                 <div>Estado: {
-                  truck?.status === "PROCESSING" ? 
-                  <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-800 text-xs font-medium">PROCESSING</span> :
+                  truck?.status === "UNAVAILABLE" ? 
+                  <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-800 text-xs font-medium">UNAVAILABLE</span> :
                   truck?.status === "DELIVERING" ?
                   <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-medium">DELIVERING</span> :
                   truck?.status === "RETURNING" ?
                   <span className="px-2 py-0.5 rounded bg-red-100 text-red-800 text-xs font-medium">RETURNING</span> :
                   truck?.status === "BREAKDOWN" ?
                   <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-medium">BREAKDOWN</span> :      
-                  <span className="px-2 py-0.5 rounded bg-green-100 text-green-800 text-xs font-medium">AVAILABLE</span>
+                  truck?.status === "AVAILABLE" ?
+                  <span className="px-2 py-0.5 rounded bg-green-100 text-green-800 text-xs font-medium">AVAILABLE</span> :
+                  truck?.status === "MAINTENANCE" ?
+                  <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-800 text-xs font-medium">MAINTENANCE</span> :
+                  <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-800 text-xs font-medium">UNKNOWN</span>
                 }</div>
+                <div>Pedidos pendientes: {truck?.pedidos.length}</div>
+                {truck?.pedidos && truck.pedidos.length > 0 && (
+                  <div className="text-xs text-gray-500">
+                    {truck.pedidos.map((pedido, index) => (
+                      <span key={pedido + index}>
+                        {pedido}{index < truck.pedidos.length - 1 ? ", " : ""}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

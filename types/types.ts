@@ -12,6 +12,7 @@ export interface TruckDTO {
   status: string
   consumoAcumulado: number
   ruta: PointDTO[]
+  pedidos: string[]
 }
 
 export interface Pedido {
@@ -46,7 +47,7 @@ export interface CamionDTO {
   volumenDisponible: number
   combustible: number
   ruta: number[]
-  pedidosPendientes: string[]
+  pedidos: string[]
 }
 
 export interface PedidoDTO {
@@ -59,6 +60,8 @@ export interface PedidoDTO {
   tiempoLimite: number
   atendido: boolean
   descartado: boolean
+  programado: boolean
+  enEntrega: boolean
 }
 
 export interface TanqueDTO {
@@ -68,6 +71,7 @@ export interface TanqueDTO {
   capacidadDisponible: number
   posX: number
   posY: number
+  pedidos: string[]
 }
 
 export interface BloqueoDTO {

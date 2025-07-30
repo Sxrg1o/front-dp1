@@ -170,24 +170,25 @@ export function PedidosSection() {
       // Añadir las horas y minutos límite al tiempo actual
       let fechaLimite = addMinutes(addHours(now, newPedido.horasLimite), newPedido.minutosLimite);
       
-      // Restar 5 horas para el ajuste con Java
-      fechaLimite = addHours(fechaLimite, -5);
-      
       // Establecer segundos y milisegundos a 0
       fechaLimite = set(fechaLimite, {
         seconds: 0,
         milliseconds: 0
       });
       
+      // Restar 5 horas
+
+      const fechaLimitePedido = addHours(fechaLimite, -5);
+
       // Convertir a ISO string para enviar al backend
-      const tiempoLimite = fechaLimite.toISOString();
-      
+      const tiempoLimite = fechaLimitePedido.toISOString();
+
       const pedidoToCreate = {
         idCliente: newPedido.idCliente,
         x: newPedido.x,
         y: newPedido.y,
         volumen: newPedido.volumen,
-        tiempoLimite: tiempoLimite
+        tiempoLimite: tiempoLimite,
       };
       
       await pedidosService.create(pedidoToCreate);

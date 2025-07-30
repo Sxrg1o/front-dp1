@@ -35,7 +35,7 @@ export function TankModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Estado del Tanque - {tank.nombre}</DialogTitle>
+          <DialogTitle>Estado del Tanque - {tank.id}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <Card className={getTankBackgroundColor(tankLevel)}>
@@ -55,8 +55,21 @@ export function TankModal({
                   {tankLevel}%
                 </Badge>
               </div>
+
+              {tank?.pedidos && (
+                <div>Lista de pedidos: {tank?.pedidos.length}</div>
+              )}
+              {tank?.pedidos && tank.pedidos.length > 0 && (
+                <div className="text-xs text-gray-500">
+                  {tank.pedidos.map((pedido, index) => (
+                    <span key={pedido + index}>
+                      {pedido}{index < tank.pedidos.length - 1 ? ", " : ""}
+                    </span>
+                  ))}
+                </div>
+              )}
               <p className="text-sm text-gray-600 mt-1">
-                Nivel de GLP: {tankLevel}% - {tank.nombre}
+                Nivel de GLP: {tankLevel}% - {tank.id}
               </p>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                 <div

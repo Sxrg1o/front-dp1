@@ -1,12 +1,60 @@
 "use client"
 
+import { useState, useEffect, useRef } from "react"
 import { SimulationMap } from "@/components/features/simulation/components/simulation-map"
 import { SimulationControls } from "@/components/features/simulation/components/simulation-controls"
 import { formatSimulationTime } from "@/utils/timeUtils"
 import { useAppStore } from "@/store/appStore"
 import { EndSimulationModal } from "@/components/features/simulation/components/EndSimulationModal"
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 export function SharedMapView() {
+  // Estado para la ventana movible
+  const [position, setPosition] = useState({ x: window.innerWidth - 350, y: window.innerHeight - 150 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+
+  const handleDragStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    };
+  };
+
+  useEffect(() => {
+    const handleDragging = (e: MouseEvent) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      setPosition({
+        x: e.clientX - dragStartRef.current.x,
+        y: e.clientY - dragStartRef.current.y,
+      });
+    };
+
+    const handleDragEnd = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleDragging);
+      window.addEventListener('mouseup', handleDragEnd);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleDragging);
+      window.removeEventListener('mouseup', handleDragEnd);
+    };
+  }, [isDragging]);
+
+  const [isPanelMinimized, setIsPanelMinimized] = useState(false);
+  
+  const togglePanelMinimized = () => {
+    setIsPanelMinimized(!isPanelMinimized);
+  };
   const mode = useAppStore((state) => state.mode);
   
   const simulationState = useAppStore((state) => state.simulation);
@@ -62,10 +110,10 @@ export function SharedMapView() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{getTitle()}</h1>
+        <div className="flex items-baseline gap-6"> 
+          <h1 className="text-2xl font-bold">{getTitle()}</h1>
           {mode === 'simulation' && (
-            <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
+            <div className="flex items-center gap-4 text-sm text-gray-600 border-l pl-6">
               <span>{getDateInfo()}</span>
               <span>Tiempo transcurrido: {formatSimulationTime(tiempoSimulacion)}</span>
             </div>
@@ -73,14 +121,9 @@ export function SharedMapView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2">
-          <SimulationMap />
-        </div>
-        
-        <div className="xl:col-span-1">
-          <SimulationControls />
-        </div>
+      <div className="relative w-full">
+        {/* Mapa a ancho completo */}
+        <SimulationMap isPanelMinimized={isPanelMinimized} togglePanelMinimized={togglePanelMinimized} />
       </div>
 
       <EndSimulationModal />
