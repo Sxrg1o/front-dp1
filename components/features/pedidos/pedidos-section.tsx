@@ -176,15 +176,19 @@ export function PedidosSection() {
         milliseconds: 0
       });
       
+      // Restar 5 horas
+
+      const fechaLimitePedido = addHours(fechaLimite, -5);
+
       // Convertir a ISO string para enviar al backend
-      const tiempoLimite = fechaLimite.toISOString();
-      
+      const tiempoLimite = fechaLimitePedido.toISOString();
+
       const pedidoToCreate = {
         idCliente: newPedido.idCliente,
         x: newPedido.x,
         y: newPedido.y,
         volumen: newPedido.volumen,
-        tiempoLimite: tiempoLimite
+        tiempoLimite: tiempoLimite,
       };
       
       await pedidosService.create(pedidoToCreate);
