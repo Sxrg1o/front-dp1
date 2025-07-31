@@ -18,6 +18,14 @@ export function TruckLayer({ GRID_SIZE, onTruckClick }: TruckLayerProps) {
       ? state.simulationData.camiones 
       : state.operationalData.camiones
   )
+  
+  // Obtener el camión seleccionado del store
+  const selectedTruckId = useAppStore((state) => state.selectedTruckId)
+
+  // Filtrar los camiones a mostrar
+  const camionesAMostrar = selectedTruckId 
+    ? camiones.filter(truck => truck.id === selectedTruckId) 
+    : camiones
 
   const getTruckType = (id: string) => {
     if (id.startsWith("TA")) return "TA"
@@ -29,7 +37,7 @@ export function TruckLayer({ GRID_SIZE, onTruckClick }: TruckLayerProps) {
 
   return (
     <>
-      {camiones?.map((truck) => {
+      {camionesAMostrar?.map((truck) => {
         const colorName = getTruckColorName(truck.id, truck.status);
         const iconClass = getTruckIconColorClass(colorName);
         

@@ -14,6 +14,14 @@ export function RouteLayer({ GRID_SIZE }: RouteLayerProps) {
   const mode = useAppStore((state) => state.mode);
 
   const camiones = mode === 'simulation' ? camionesSimulacion : camionesOperacional;
+  
+  // Obtener el camión seleccionado del store
+  const selectedTruckId = useAppStore((state) => state.selectedTruckId)
+
+  // Filtrar los camiones a mostrar
+  const camionesAMostrar = selectedTruckId 
+    ? camiones.filter(truck => truck.id === selectedTruckId) 
+    : camiones;
 
   const mapPointsToString = (points: PointDTO[]): string => {
     return points
@@ -26,7 +34,7 @@ export function RouteLayer({ GRID_SIZE }: RouteLayerProps) {
       className="absolute top-0 left-0 w-full h-full pointer-events-none"
       style={{ width: '100%', height: '100%' }}
     >
-      {camiones.map((truck) => {
+      {camionesAMostrar.map((truck) => {
         if (!truck.ruta || truck.ruta.length < 2) {
           return null;
         }

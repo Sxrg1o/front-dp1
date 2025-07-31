@@ -68,12 +68,18 @@ const initialState: AppState = {
       type: null,
       message: ''
     }
-  }
+  },
+  selectedTruckId: null, // Por defecto, ningún camión seleccionado
+  selectedOrderId: null // Por defecto, ningún pedido seleccionado
 };
 
 // Crear el store
 export const useAppStore = create<AppStore>((set, get) => ({
   ...initialState,
+  
+  // Acciones para seleccionar entidades
+  setSelectedTruckId: (truckId) => set({ selectedTruckId: truckId }),
+  setSelectedOrderId: (orderId) => set({ selectedOrderId: orderId }),
 
   // Acciones de simulación
   setSimulationId: (id) => set((state) => ({

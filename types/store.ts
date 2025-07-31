@@ -50,6 +50,9 @@ export interface UIState {
     reporte?: {
       totalPedidosEntregados: number;
       totalDistanciaRecorrida: number;
+      combustibleConsumido: number;
+      glpEntregado: number;
+      pedidosEntregados: PedidoDTO[];
       pedidoColapso: string | null;
     };
   };
@@ -66,6 +69,8 @@ export interface AppState {
   simulationData: SimulationDataState;
   operationalData: SimulationDataState;  // Datos separados para modo operational
   ui: UIState;
+  selectedTruckId: string | null; // Guarda el ID del camión seleccionado
+  selectedOrderId: string | null; // Guarda el ID del pedido seleccionado
 }
 
 // Acciones para la simulación
@@ -102,6 +107,9 @@ export interface UIActions {
   openEndModal: (type: 'completed' | 'collapsed', message: string, reporte?: {
     totalPedidosEntregados: number;
     totalDistanciaRecorrida: number;
+    combustibleConsumido: number;
+    glpEntregado: number;
+    pedidosEntregados: PedidoDTO[];
     pedidoColapso: string | null;
   }) => void;
   closeEndModal: () => void;
@@ -121,5 +129,11 @@ export interface APIActions {
 // Todas las acciones combinadas
 export interface AppActions extends SimulationActions, DataActions, UIActions, APIActions {}
 
+// Acciones para la selección de entidades
+export interface SelectionActions {
+  setSelectedTruckId: (truckId: string | null) => void;
+  setSelectedOrderId: (orderId: string | null) => void;
+}
+
 // Store completo (estado + acciones)
-export type AppStore = AppState & AppActions;
+export type AppStore = AppState & AppActions & SelectionActions;

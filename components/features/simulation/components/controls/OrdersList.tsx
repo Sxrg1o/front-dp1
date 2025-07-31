@@ -7,10 +7,26 @@ import { Input } from "@/components/ui/input"
 import { TabsContent } from "@/components/ui/tabs"
 import { useAppStore } from "@/store/appStore"
 import { formatSimulationTime } from "@/utils/timeUtils"
+import { cn } from "@/lib/utils" // Utilidad para clases condicionales
 
 export function OrdersList() {
   const [searchOrder, setSearchOrder] = useState("")
   const mode = useAppStore((state) => state.mode);
+  
+  // Obtener el estado y la acción del store
+  const selectedOrderId = useAppStore((state) => state.selectedOrderId)
+  const setSelectedOrderId = useAppStore((state) => state.setSelectedOrderId)
+  
+  // También obtenemos el action para limpiar los camiones seleccionados
+  const setSelectedTruckId = useAppStore((state) => state.setSelectedTruckId)
+  
+  const handleRowClick = (orderId: string) => {
+    // Si el pedido clickeado ya está seleccionado, lo deseleccionamos (poniendo null)
+    // Si no, lo seleccionamos y limpiamos cualquier camión seleccionado.
+    setSelectedOrderId(selectedOrderId === orderId ? null : orderId)
+    // Desseleccionar cualquier camión que estuviera seleccionado
+    setSelectedTruckId(null)
+  };
 
   const tiempoActual = useAppStore((state) => 
     mode === 'simulation' 
@@ -75,7 +91,14 @@ export function OrdersList() {
                 const estaVencido = tiempoRestante <= 0;
 
                 return (
-                  <TableRow key={`${order.id}-${order.tiempoLimite}`}>
+                  <TableRow 
+                    key={`${order.id}-${order.tiempoLimite}`}
+                    onClick={() => handleRowClick(order.id.toString())}
+                    className={cn(
+                      "cursor-pointer hover:bg-muted/50 transition-colors",
+                      selectedOrderId === order.id.toString() && "bg-muted/80" // Resaltar si está seleccionado
+                    )}
+                  >
                     <TableCell className="text-xs font-medium">{order.id}</TableCell>
                     <TableCell className="text-xs text-center">{order.x}, {order.y}</TableCell>
                     <TableCell className="text-xs text-center">{order.volumen}</TableCell>

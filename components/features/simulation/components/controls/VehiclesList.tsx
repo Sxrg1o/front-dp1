@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input"
 import { TabsContent } from "@/components/ui/tabs"
 import { useAppStore } from "@/store/appStore" // Importar el store global
+import { cn } from "@/lib/utils" // Utilidad para clases condicionales
 
 export function VehiclesList() {
   const [searchVehicle, setSearchVehicle] = useState("")
@@ -20,6 +21,21 @@ export function VehiclesList() {
       ? state.simulationData.camiones 
       : state.operationalData.camiones
   )
+
+  // Obtener el estado y la acción del store
+  const selectedTruckId = useAppStore((state) => state.selectedTruckId)
+  const setSelectedTruckId = useAppStore((state) => state.setSelectedTruckId)
+
+  // También obtenemos el action para limpiar los pedidos seleccionados
+  const setSelectedOrderId = useAppStore((state) => state.setSelectedOrderId)
+
+  const handleRowClick = (truckId: string) => {
+    // Si el camión clickeado ya está seleccionado, lo deseleccionamos (poniendo null)
+    // Si no, lo seleccionamos y limpiamos cualquier pedido seleccionado.
+    setSelectedTruckId(selectedTruckId === truckId ? null : truckId)
+    // Desseleccionar cualquier pedido que estuviera seleccionado
+    setSelectedOrderId(null)
+  }
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -64,7 +80,14 @@ export function VehiclesList() {
             </TableHeader>
             <TableBody>
               {filteredVehicles.map((vehicle) => (
-                <TableRow key={vehicle.id}>
+                <TableRow 
+                  key={vehicle.id}
+                  onClick={() => handleRowClick(vehicle.id)}
+                  className={cn(
+                    "cursor-pointer hover:bg-muted/50 transition-colors",
+                    selectedTruckId === vehicle.id && "bg-muted/80" // Resaltar si está seleccionado
+                  )}
+                >
                   <TableCell className="text-xs font-medium">{vehicle.id}</TableCell>
                   <TableCell className="text-xs text-center">{vehicle.x}, {vehicle.y}</TableCell>
                   <TableCell className="text-xs text-center">{vehicle.disponible.toFixed(2)}</TableCell>

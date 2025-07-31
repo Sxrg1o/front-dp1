@@ -133,5 +133,8 @@ export interface SpeedRequest {
 export interface ReporteDTO {
   totalPedidosEntregados: number;
   totalDistanciaRecorrida: number;
+  combustibleConsumido: number;
+  glpEntregado: number;
+  pedidosEntregados: PedidoDTO[];
   pedidoColapso: string | null;
 }
